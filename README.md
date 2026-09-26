@@ -71,7 +71,18 @@ main -> release/* -> feature/* or fix/* -> PR -> release/* -> PR -> main
 ```
 
 The project does not use a special deploy branch or GitHub Pages deployment. Deployment
-automation is intentionally outside this repository's initialization scope.
+automation runs from `main`: each merge creates the next `v*` tag, builds the production Docker
+image, publishes it to `ghcr.io/martin-wmm/agentgo-ui`, and attaches a compressed image archive
+and checksum to the corresponding GitHub Release.
+
+To run the image locally after building it:
+
+```bash
+docker build -t agentgo-ui:local .
+docker run --rm -p 8080:80 agentgo-ui:local
+```
+
+Open `http://localhost:8080` to view the application.
 
 ## UI conventions
 

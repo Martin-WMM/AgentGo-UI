@@ -40,6 +40,10 @@ Run commands from the repository root so pnpm resolves all workspace packages.
   new user-facing features must provide both translations.
 - Preserve keyboard navigation, focus states, semantic HTML, and responsive behavior.
 - Do not add GitHub Pages or deploy-branch workflows unless explicitly requested.
+- Releases are produced only from `main`; the release workflow creates a `v*` tag, publishes the
+  UI image to GHCR, and uploads a compressed image archive to the GitHub Release.
+- Keep the production container definition in `Dockerfile` and the SPA fallback configuration in
+  `docker/nginx.conf`.
 
 ## Backend boundary
 
