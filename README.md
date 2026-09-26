@@ -52,6 +52,18 @@ The initial locales are English (`en`) and Simplified Chinese (`zh-CN`). The sel
 also persisted locally. Add shared translations in `app/src/i18n.ts` and keep user-facing text
 out of components when it is expected to be translated.
 
+## Application shell
+
+The web application uses a three-part shell:
+
+- The header contains the AgentGo brand, user menu, language switcher, theme switcher, and basic settings.
+- The main area is routed with Vue Router and currently includes the home, chat, and settings views.
+- The footer contains copyright and legal navigation statements.
+
+The home view is a ChatGPT-style conversation entry point with a central prompt composer and
+quick-start suggestions. The light and dark AgentGo logo assets are reused from AgentGo Docs under
+`app/public/assets`.
+
 ## Quality checks
 
 ```bash
