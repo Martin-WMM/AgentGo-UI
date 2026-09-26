@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+permissions:
+  contents: read
+
+jobs:
+  compliance:
+    name: Commit and repository compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate commits
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          elif [[ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]]; then
+            range="${{ github.sha }}"
+          else
+            range="${{ github.event.before }}..${{ github.sha }}"
+          fi
+          while IFS= read -r sha; do
+            parent_count="$(git rev-list --parents -n 1 "$sha" | awk '{print NF - 1}')"
+            if (( parent_count > 1 )); then
+              echo "Skipping merge commit: $sha"
+              continue
+            fi
+            message="$(git log -1 --format=%s "$sha")"
+            if ! [[ "$message" =~ ^[^[:space:]]+[a-z]+:\ .+ ]]; then
+              echo "Invalid commit message: $sha $message"
+              exit 1
+            fi
+            changed="$(git diff-tree --no-commit-id --numstat -r "$sha" | awk '$3 != "pnpm-lock.yaml" {a+=$1; d+=$2} END {print a+d+0}')"
+            if (( changed > 200 )); then
+              echo "Commit $sha changes $changed lines; maximum is 200."
+              exit 1
+            fi
+          done < <(git rev-list --first-parent "$range")
+      - name: Check required project files
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in AGENTS.md README.md CHANGELOG.md CONTRIBUTING.md SECURITY.md; do
+            test -f "$file" || { echo "Missing $file"; exit 1; }
+          done
+          test -d .github/workflows
+
+  quality:
+    name: Quality checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm build
