@@ -41,6 +41,15 @@ Run commands from the repository root so pnpm resolves all workspace packages.
 - Preserve keyboard navigation, focus states, semantic HTML, and responsive behavior.
 - Do not add GitHub Pages or deploy-branch workflows unless explicitly requested.
 
+## Backend boundary
+
+- `AgentGo-backend` is the only backend for this web project.
+- Keep API clients and server communication directed to `AgentGo-backend`.
+- Do not add a second backend, mock server, or independent server implementation to this
+  repository unless the task explicitly requires a temporary test double.
+- Keep externally visible API contract changes aligned with the
+  [AgentGo-backend](https://github.com/Martin-WMM/AgentGo-backend) repository.
+
 ## Git workflow
 
 The intended flow is:

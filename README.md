@@ -14,6 +14,13 @@ packages/ui/         # Shared shadcn-style Vue components and design tokens
 
 The application consumes shared UI components through the `@agentgo/ui` workspace package.
 
+## Backend
+
+This web project has one backend: [AgentGo-backend](https://github.com/Martin-WMM/AgentGo-backend).
+All web API integrations, authentication flows, and server-side data requests must target that
+backend. Do not introduce a second backend or an independent server implementation in this
+repository.
+
 ## Toolchain
 
 - Node.js 22
