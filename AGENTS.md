@@ -34,6 +34,10 @@ Run commands from the repository root so pnpm resolves all workspace packages.
 - Use Tailwind CSS 4 utilities and shadcn-style variant patterns.
 - Use `cn()` for class merging and `class-variance-authority` for component variants.
 - Use Iconify for icons and provide accessible labels or hidden text where needed.
+- Support both light and dark themes through semantic CSS variables and persist the user's theme
+  choice locally.
+- Keep user-facing text in the i18n message catalog. The initial locales are `en` and `zh-CN`;
+  new user-facing features must provide both translations.
 - Preserve keyboard navigation, focus states, semantic HTML, and responsive behavior.
 - Do not add GitHub Pages or deploy-branch workflows unless explicitly requested.
 

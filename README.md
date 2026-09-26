@@ -23,6 +23,7 @@ The application consumes shared UI components through the `@agentgo/ui` workspac
 - TypeScript
 - Tailwind CSS 4
 - Iconify
+- vue-i18n with English and Simplified Chinese locales
 
 ## Development
 
@@ -34,6 +35,15 @@ pnpm dev
 ```
 
 The development server is available at `http://localhost:5173`.
+
+## Themes and localization
+
+The application supports light and dark modes. The initial mode follows the system preference
+when no user choice has been saved; subsequent choices are persisted in local storage.
+
+The initial locales are English (`en`) and Simplified Chinese (`zh-CN`). The selected locale is
+also persisted locally. Add shared translations in `app/src/i18n.ts` and keep user-facing text
+out of components when it is expected to be translated.
 
 ## Quality checks
 
