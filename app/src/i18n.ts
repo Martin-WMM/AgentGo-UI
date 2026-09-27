@@ -10,7 +10,7 @@ const messages = {
     navigation: { label: 'Primary navigation', home: 'Home', chat: 'Chat', settings: 'Settings' },
     language: { label: 'Switch language' },
     theme: { light: 'Switch to light mode', dark: 'Switch to dark mode' },
-    user: { menu: 'Open user menu', signedInAs: 'Signed in as' },
+    user: { menu: 'Open user menu', signedInAs: 'Signed in as', logout: 'Sign out' },
     footer: {
       rights: 'All rights reserved.',
       privacy: 'Privacy',
@@ -36,6 +36,23 @@ const messages = {
       title: 'Basic settings',
       description: 'Manage your workspace preferences and connected services.',
     },
+    profile: {
+      title: 'User profile',
+      description: 'Update your profile. Changes are synchronized to Authentik.',
+      loading: 'Loading profile…',
+      username: 'Username',
+      usernameHint: 'Username is managed by Authentik and cannot be changed here.',
+      managedByAuthentik: 'Managed by Authentik',
+      displayName: 'Display name',
+      email: 'Email',
+      avatarUrl: 'Avatar URL',
+      avatarPlaceholder: 'https://example.com/avatar.png',
+      save: 'Save changes',
+      saving: 'Saving…',
+      saved: 'Profile saved and synchronized to Authentik.',
+      loadError: 'Unable to load your profile.',
+      saveError: 'Unable to save your profile. Check the Authentik connection.',
+    },
   },
   'zh-CN': {
     brand: 'AgentGo',
@@ -43,7 +60,7 @@ const messages = {
     navigation: { label: '主导航', home: '首页', chat: '对话', settings: '设置' },
     language: { label: '切换语言' },
     theme: { light: '切换到浅色模式', dark: '切换到深色模式' },
-    user: { menu: '打开用户菜单', signedInAs: '当前登录用户' },
+    user: { menu: '打开用户菜单', signedInAs: '当前登录用户', logout: '退出登录' },
     footer: {
       rights: '保留所有权利。',
       privacy: '隐私政策',
@@ -62,6 +79,26 @@ const messages = {
     },
     chat: { title: '新对话', description: '与 AgentGo 助手开始一次专注的对话。' },
     settings: { title: '基本设置', description: '管理工作空间偏好和已连接的服务。' },
+    profile: {
+      title: '\u7528\u6237\u8d44\u6599',
+      description:
+        '\u66f4\u65b0\u4f60\u7684\u7528\u6237\u8d44\u6599\uff0c\u4fee\u6539\u5c06\u540c\u6b65\u5230 Authentik\u3002',
+      loading: '\u6b63\u5728\u52a0\u8f7d\u8d44\u6599\u2026',
+      username: '\u7528\u6237\u540d',
+      usernameHint:
+        '\u7528\u6237\u540d\u7531 Authentik \u7ba1\u7406\uff0c\u4e0d\u80fd\u5728\u6b64\u4fee\u6539\u3002',
+      managedByAuthentik: '\u7531 Authentik \u7ba1\u7406',
+      displayName: '\u663e\u793a\u540d',
+      email: '\u90ae\u7bb1',
+      avatarUrl: '\u5934\u50cf URL',
+      avatarPlaceholder: 'https://example.com/avatar.png',
+      save: '\u4fdd\u5b58\u4fee\u6539',
+      saving: '\u6b63\u5728\u4fdd\u5b58\u2026',
+      saved: '\u8d44\u6599\u5df2\u4fdd\u5b58\u5e76\u540c\u6b65\u5230 Authentik\u3002',
+      loadError: '\u65e0\u6cd5\u52a0\u8f7d\u7528\u6237\u8d44\u6599\u3002',
+      saveError:
+        '\u65e0\u6cd5\u4fdd\u5b58\u7528\u6237\u8d44\u6599\uff0c\u8bf7\u68c0\u67e5 Authentik \u8fde\u63a5\u3002',
+    },
   },
 } as const;
 

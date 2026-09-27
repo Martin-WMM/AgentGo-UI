@@ -58,6 +58,8 @@ The web application uses a three-part shell:
 
 - The header contains the AgentGo brand, user menu, language switcher, theme switcher, and basic settings.
 - The main area is routed with Vue Router and currently includes the home, chat, and settings views.
+- The settings view includes an authenticated user profile form whose changes are synchronized by
+  the AgentGo backend to Authentik.
 - The footer contains copyright and legal navigation statements.
 
 The home view is a ChatGPT-style conversation entry point with a central prompt composer and
