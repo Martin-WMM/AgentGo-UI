@@ -40,3 +40,7 @@ pnpm build
 ## 文档
 
 架构、认证、部署、扩展和贡献说明请查看 [AgentGo Docs](https://github.com/Martin-WMM/AgentGo-docs)，尤其是[快速上手](https://github.com/Martin-WMM/AgentGo-docs/tree/main/app/src/resources/%E5%BF%AB%E9%80%9F%E4%B8%8A%E6%89%8B)和[集成与扩展](https://github.com/Martin-WMM/AgentGo-docs/tree/main/app/src/resources/%E9%9B%86%E6%88%90%E4%B8%8E%E6%89%A9%E5%B1%95)。
+
+## 许可证
+
+本项目采用 [AgentGo Proprietary License](LICENSE)。版权所有归 Martin M. W.（王美民）所有。任何使用、修改、分发或商业用途，均须先通过 `blessedwmm@gmail.com` 获得本人书面确认授权。
