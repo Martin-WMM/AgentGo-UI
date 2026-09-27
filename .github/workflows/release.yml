@@ -1,0 +1,98 @@
+name: Release UI image
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Tag, build, and publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out merged main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculate release version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest="$(git tag --list 'v*' --sort=-version:refname | head -n 1)"
+          if [[ -z "$latest" ]]; then
+            next="v0.1.0"
+          else
+            version="${latest#v}"
+            IFS='.' read -r major minor patch <<< "$version"
+            next="v${major}.${minor}.$((patch + 1))"
+          fi
+          echo "tag=$next" >> "$GITHUB_OUTPUT"
+          echo "version=$next" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        id: image
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/agentgo-ui"
+          docker build \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            --label "org.opencontainers.image.version=${RELEASE_TAG}" \
+            -t "${image}:${RELEASE_TAG}" \
+            -t "${image}:latest" \
+            .
+          docker push "${image}:${RELEASE_TAG}"
+          docker push "${image}:latest"
+          echo "name=${image}" >> "$GITHUB_OUTPUT"
+
+      - name: Export image archive
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          IMAGE_NAME: ${{ steps.image.outputs.name }}
+        run: |
+          set -euo pipefail
+          docker save "${IMAGE_NAME}:${RELEASE_TAG}" | gzip -9 > "agentgo-ui-${RELEASE_TAG}.tar.gz"
+          sha256sum "agentgo-ui-${RELEASE_TAG}.tar.gz" > "agentgo-ui-${RELEASE_TAG}.tar.gz.sha256"
+
+      - name: Create tag
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$RELEASE_TAG" "$GITHUB_SHA" -m "Release $RELEASE_TAG"
+          git push origin "$RELEASE_TAG"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            "agentgo-ui-${RELEASE_TAG}.tar.gz" \
+            "agentgo-ui-${RELEASE_TAG}.tar.gz.sha256" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "AgentGo UI ${RELEASE_TAG}" \
+            --generate-notes

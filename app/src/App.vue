@@ -1,30 +1,211 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { RouterLink, RouterView, useRoute } from 'vue-router';
 
-import { Button } from '@agentgo/ui';
+import { useTheme } from './composables/useTheme';
+import { useAuthStore } from './stores/auth';
+
+const { locale, t } = useI18n();
+const { theme, toggleTheme } = useTheme();
+const auth = useAuthStore();
+const route = useRoute();
+const userMenuOpen = ref(false);
+const userMenuRoot = ref<HTMLElement | null>(null);
+const isDark = computed(() => theme.value === 'dark');
+const userName = computed(() => auth.user?.name || auth.user?.email || '');
+const userInitials = computed(() => {
+  const initials = userName.value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+  return initials || '?';
+});
+const logoSource = computed(() =>
+  isDark.value ? '/assets/logo-dark.png' : '/assets/logo-light.png',
+);
+
+function setLocale(nextLocale: 'en' | 'zh-CN') {
+  locale.value = nextLocale;
+  localStorage.setItem('agentgo-locale', nextLocale);
+}
+
+function toggleLocale() {
+  setLocale(locale.value === 'en' ? 'zh-CN' : 'en');
+}
+
+function closeUserMenu() {
+  userMenuOpen.value = false;
+}
+
+function onDocumentPointerDown(event: PointerEvent) {
+  if (!userMenuOpen.value) return;
+  const target = event.target;
+  if (target instanceof Node && userMenuRoot.value?.contains(target)) return;
+  closeUserMenu();
+}
+
+function onDocumentKeyDown(event: KeyboardEvent) {
+  if (event.key === 'Escape') closeUserMenu();
+}
+
+onMounted(() => {
+  document.addEventListener('pointerdown', onDocumentPointerDown);
+  document.addEventListener('keydown', onDocumentKeyDown);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', onDocumentPointerDown);
+  document.removeEventListener('keydown', onDocumentKeyDown);
+});
 </script>
 
 <template>
-  <main class="min-h-screen bg-background text-foreground">
-    <section class="mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-16">
-      <div class="mb-8 flex items-center gap-3 text-primary">
-        <Icon icon="lucide:bot" width="32" height="32" aria-hidden="true" />
-        <span class="text-sm font-semibold uppercase tracking-[0.3em]">AgentGo</span>
+  <div class="flex min-h-screen flex-col bg-background text-foreground">
+    <header class="sticky top-0 z-30 border-b border-input/70 bg-background/90 backdrop-blur">
+      <div class="mx-auto flex h-16 w-full max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
+        <RouterLink to="/" class="flex min-w-0 items-center gap-3" :aria-label="t('brand')">
+          <span
+            class="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-accent"
+          >
+            <img :src="logoSource" alt="" class="size-16 max-w-none object-cover" />
+          </span>
+          <span class="hidden min-w-0 sm:block">
+            <span class="block truncate text-sm font-semibold tracking-tight">{{
+              t('brand')
+            }}</span>
+            <span class="block truncate text-xs text-muted-foreground">{{
+              t('brandTagline')
+            }}</span>
+          </span>
+        </RouterLink>
+
+        <nav class="hidden items-center gap-1 md:flex" :aria-label="t('navigation.label')">
+          <RouterLink
+            to="/"
+            class="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
+            :class="
+              route.path === '/' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'
+            "
+          >
+            {{ t('navigation.home') }}
+          </RouterLink>
+          <RouterLink
+            to="/chat"
+            class="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
+            :class="
+              route.path === '/chat' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'
+            "
+          >
+            {{ t('navigation.chat') }}
+          </RouterLink>
+        </nav>
+
+        <div class="ml-auto flex items-center gap-1">
+          <div ref="userMenuRoot" class="relative">
+            <button
+              class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent"
+              type="button"
+              :aria-expanded="userMenuOpen"
+              :aria-label="t('user.menu')"
+              @click="userMenuOpen = !userMenuOpen"
+            >
+              <span
+                class="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-xs font-bold text-white"
+              >
+                <img
+                  v-if="auth.user?.picture"
+                  :src="auth.user.picture"
+                  :alt="userName"
+                  class="size-full object-cover"
+                />
+                <span v-else>{{ userInitials }}</span>
+              </span>
+              <span class="hidden max-w-32 truncate text-sm font-medium lg:block">{{
+                userName
+              }}</span>
+              <Icon icon="lucide:chevron-down" width="15" height="15" aria-hidden="true" />
+            </button>
+            <div
+              v-if="userMenuOpen"
+              class="absolute right-0 top-12 w-48 rounded-xl border border-input bg-background p-2 shadow-xl"
+            >
+              <p class="px-3 py-2 text-xs text-muted-foreground">{{ t('user.signedInAs') }}</p>
+              <p class="truncate px-3 pb-1 text-sm font-medium">{{ userName }}</p>
+              <p class="truncate px-3 pb-2 text-xs text-muted-foreground">{{ auth.user?.email }}</p>
+              <RouterLink
+                to="/settings"
+                class="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
+                @click="userMenuOpen = false"
+              >
+                <Icon icon="lucide:settings-2" width="16" height="16" aria-hidden="true" />
+                {{ t('navigation.settings') }}
+              </RouterLink>
+              <button
+                type="button"
+                class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
+                @click="auth.logout"
+              >
+                <Icon icon="lucide:log-out" width="16" height="16" aria-hidden="true" />
+                {{ t('user.logout') }}
+              </button>
+            </div>
+          </div>
+          <button
+            class="rounded-lg px-2.5 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            type="button"
+            :aria-label="t('language.label')"
+            @click="toggleLocale"
+          >
+            {{ locale === 'en' ? '中' : 'EN' }}
+          </button>
+          <button
+            class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            type="button"
+            :aria-label="isDark ? t('theme.light') : t('theme.dark')"
+            @click="toggleTheme"
+          >
+            <Icon
+              :icon="isDark ? 'lucide:sun' : 'lucide:moon'"
+              width="18"
+              height="18"
+              aria-hidden="true"
+            />
+          </button>
+          <RouterLink
+            to="/settings"
+            class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            :aria-label="t('navigation.settings')"
+          >
+            <Icon icon="lucide:sliders-horizontal" width="18" height="18" aria-hidden="true" />
+          </RouterLink>
+        </div>
       </div>
-      <h1 class="max-w-3xl text-4xl font-bold tracking-tight sm:text-6xl">
-        Build and guide your agents from one focused workspace.
-      </h1>
-      <p class="mt-6 max-w-2xl text-lg text-muted-foreground">
-        The AgentGo UI foundation is ready with Vue 3, shadcn-style components, Tailwind CSS 4, and
-        Iconify.
-      </p>
-      <div class="mt-8 flex flex-wrap gap-3">
-        <Button>Get started</Button>
-        <Button variant="outline">
-          <Icon icon="lucide:book-open" width="18" height="18" aria-hidden="true" />
-          Read the docs
-        </Button>
+    </header>
+
+    <main class="flex-1"><RouterView /></main>
+
+    <footer class="border-t border-input/70 bg-background">
+      <div
+        class="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8"
+      >
+        <p>© {{ new Date().getFullYear() }} AgentGo. {{ t('footer.rights') }}</p>
+        <div class="flex gap-4">
+          <a href="#" class="transition-colors hover:text-foreground">{{ t('footer.privacy') }}</a>
+          <a href="#" class="transition-colors hover:text-foreground">{{ t('footer.terms') }}</a>
+          <a
+            href="https://github.com/Martin-WMM/AgentGo-backend"
+            target="_blank"
+            rel="noreferrer"
+            class="transition-colors hover:text-foreground"
+            >{{ t('footer.backend') }}</a
+          >
+        </div>
       </div>
-    </section>
-  </main>
+    </footer>
+  </div>
 </template>

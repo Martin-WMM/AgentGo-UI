@@ -1,41 +1,28 @@
-# AgentGo UI
+<p align="center">
+  <img src="app/public/assets/logo-dark.png" alt="AgentGo" width="180">
+</p>
 
-AgentGo UI is the AgentGo web application built with Vue 3, TypeScript, Tailwind CSS 4,
-shadcn-style components, and Iconify.
+<h1 align="center">AgentGo UI</h1>
 
-## Repository structure
+<p align="center">
+  <a href="https://github.com/Martin-WMM/AgentGo-UI/actions/workflows/ci.yml"><img src="https://github.com/Martin-WMM/AgentGo-UI/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://github.com/Martin-WMM/AgentGo-UI"><img src="https://img.shields.io/github/stars/Martin-WMM/AgentGo-UI" alt="GitHub stars"></a>
+</p>
 
-This repository uses a pnpm workspace monorepo modeled after AgentGo Docs:
+AgentGo 的 Vue Web 客户端，提供 Agent 入口、会话、用户设置和主题/语言切换。后端统一使用 [AgentGo Backend](https://github.com/Martin-WMM/AgentGo-backend)。
 
-```text
-app/                 # AgentGo web application
-packages/ui/         # Shared shadcn-style Vue components and design tokens
-```
+## 快速开始
 
-The application consumes shared UI components through the `@agentgo/ui` workspace package.
-
-## Toolchain
-
-- Node.js 22
-- pnpm 10.28.1
-- Vue 3
-- Vite
-- TypeScript
-- Tailwind CSS 4
-- Iconify
-
-## Development
-
-Install dependencies and start the application:
+要求：Node.js 22、pnpm 10.28.1。
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-The development server is available at `http://localhost:5173`.
+开发服务器：`http://localhost:5173`。
 
-## Quality checks
+质量检查：
 
 ```bash
 pnpm typecheck
@@ -45,22 +32,11 @@ pnpm format:check
 pnpm build
 ```
 
-## Git workflow
+## 项目结构
 
-Changes follow:
+- `app/`：Web 应用和路由页面。
+- `packages/ui/`：共享 Vue 组件和设计令牌。
 
-```text
-main -> release/* -> feature/* or fix/* -> PR -> release/* -> PR -> main
-```
+## 文档
 
-The project does not use a special deploy branch or GitHub Pages deployment. Deployment
-automation is intentionally outside this repository's initialization scope.
-
-## UI conventions
-
-- Put reusable components in `packages/ui`.
-- Keep application-specific composition in `app`.
-- Use shadcn-style component patterns with Tailwind utility classes and `cn()` merging.
-- Use Iconify for icons instead of adding an icon-specific dependency per feature.
-- Keep accessible labels, keyboard behavior, and visible focus states in interactive components.
-- Keep user-facing documentation and pull request descriptions in English.
+架构、认证、部署、扩展和贡献说明请查看 [AgentGo Docs](https://github.com/Martin-WMM/AgentGo-docs)，尤其是[快速上手](https://github.com/Martin-WMM/AgentGo-docs/tree/main/app/src/resources/%E5%BF%AB%E9%80%9F%E4%B8%8A%E6%89%8B)和[集成与扩展](https://github.com/Martin-WMM/AgentGo-docs/tree/main/app/src/resources/%E9%9B%86%E6%88%90%E4%B8%8E%E6%89%A9%E5%B1%95)。
