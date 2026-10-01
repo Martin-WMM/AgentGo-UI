@@ -1,0 +1,7 @@
+services:
+  agentgo-ui:
+    image: ghcr.io/martin-wmm/agentgo-ui:${AGENTGO_UI_IMAGE_TAG:?AGENTGO_UI_IMAGE_TAG is required}
+    container_name: agentgo-ui
+    restart: unless-stopped
+    ports:
+      - '20081:80'
