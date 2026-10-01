@@ -12,10 +12,13 @@
   "dependencies": {
     "@agentgo/ui": "workspace:*",
     "@iconify/vue": "^4.3.0",
+    "pinia": "^4.0.3",
     "vue": "^3.5.13",
+    "vue-i18n": "11.1.12",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@intlify/devtools-types": "11.1.12",
     "@tailwindcss/vite": "^4.0.12",
     "@vitejs/plugin-vue": "^5.2.3",
     "jsdom": "^26.0.0",

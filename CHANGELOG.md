@@ -11,4 +11,6 @@ All notable changes to AgentGo UI are documented in this file.
 - Added Tailwind CSS 4 integration through the Vite plugin.
 - Added shadcn-style Button component primitives and shared design tokens.
 - Added Iconify integration for application icons.
+- Added light and dark theme switching with system preference detection and local persistence.
+- Added English and Simplified Chinese localization with `vue-i18n`.
 - Added CI, security scanning, issue-first validation, and feature branch cleanup workflows.

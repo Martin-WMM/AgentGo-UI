@@ -12,7 +12,15 @@ assignees: []
 
 ## Proposed solution
 
+## Affected workspace or package
+
+<!-- For example: app, packages/ui, or both. -->
+
 ## Alternatives considered
+
+## Acceptance criteria
+
+- [ ]
 
 ## Accessibility and responsive considerations
 

@@ -27,8 +27,15 @@ assignees: []
 
 ## Actual behavior
 
+## Regression
+
+- [ ] This worked in a previous version.
+- [ ] This is a new problem.
+
 ## Evidence
 
 <!-- Remove secrets and personal data. -->
+
+<!-- Include console or network errors when relevant. -->
 
 ## Additional context
