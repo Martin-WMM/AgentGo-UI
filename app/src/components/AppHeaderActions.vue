@@ -88,7 +88,7 @@ onBeforeUnmount(() => {
         <p class="truncate px-3 pb-1 text-sm font-medium">{{ userName }}</p>
         <p class="truncate px-3 pb-2 text-xs text-muted-foreground">{{ auth.user?.email }}</p>
         <RouterLink
-          to="/settings"
+          to="/console/settings"
           class="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
           @click="userMenuOpen = false"
         >
@@ -122,7 +122,7 @@ onBeforeUnmount(() => {
       <Icon :icon="isDark ? 'lucide:sun' : 'lucide:moon'" width="18" height="18" aria-hidden="true" />
     </button>
     <RouterLink
-      to="/settings"
+      to="/console/settings"
       class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
       :aria-label="t('navigation.settings')"
     >
