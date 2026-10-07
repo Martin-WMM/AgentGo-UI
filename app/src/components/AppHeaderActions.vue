@@ -119,7 +119,12 @@ onBeforeUnmount(() => {
       :aria-label="isDark ? t('theme.light') : t('theme.dark')"
       @click="toggleTheme"
     >
-      <Icon :icon="isDark ? 'lucide:sun' : 'lucide:moon'" width="18" height="18" aria-hidden="true" />
+      <Icon
+        :icon="isDark ? 'lucide:sun' : 'lucide:moon'"
+        width="18"
+        height="18"
+        aria-hidden="true"
+      />
     </button>
     <RouterLink
       to="/console/settings"

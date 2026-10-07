@@ -30,17 +30,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown));
 <template>
   <Teleport to="body">
     <Transition name="dialog-backdrop">
-      <div
-        v-if="open"
-        class="dialog-backdrop"
-        @mousedown.self="closeOnOverlay && close()"
-      >
+      <div v-if="open" class="dialog-backdrop" @mousedown.self="closeOnOverlay && close()">
         <Transition name="dialog-panel" appear>
-          <section
-            class="dialog-content"
-            role="dialog"
-            aria-modal="true"
-          >
+          <section class="dialog-content" role="dialog" aria-modal="true">
             <slot />
           </section>
         </Transition>
@@ -71,7 +63,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown));
   border-radius: 1rem;
   padding: 1.5rem;
   background: hsl(var(--background));
-  box-shadow: 0 24px 60px rgb(0 0 0 / 0.36), 0 0 0 1px rgb(255 255 255 / 0.03) inset;
+  box-shadow:
+    0 24px 60px rgb(0 0 0 / 0.36),
+    0 0 0 1px rgb(255 255 255 / 0.03) inset;
 }
 .dialog-backdrop-enter-active,
 .dialog-backdrop-leave-active {

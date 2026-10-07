@@ -117,7 +117,9 @@ const breadcrumbs = computed(() => {
         >
           <p>© {{ new Date().getFullYear() }} AgentGo. {{ t('footer.rights') }}</p>
           <div class="flex gap-4">
-            <a href="#" class="transition-colors hover:text-foreground">{{ t('footer.privacy') }}</a>
+            <a href="#" class="transition-colors hover:text-foreground">{{
+              t('footer.privacy')
+            }}</a>
             <a href="#" class="transition-colors hover:text-foreground">{{ t('footer.terms') }}</a>
             <a
               href="https://github.com/Martin-WMM/AgentGo-backend"

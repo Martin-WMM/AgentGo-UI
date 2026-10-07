@@ -52,7 +52,8 @@ async function toFileRequestError(response: Response): Promise<FileRequestError>
   let errorCode: string | undefined;
   try {
     const body = (await response.json()) as ErrorBody;
-    message = body.message?.trim() ?? body.errors?.find((item) => item.message)?.message?.trim() ?? '';
+    message =
+      body.message?.trim() ?? body.errors?.find((item) => item.message)?.message?.trim() ?? '';
     errorCode = body.responseType ?? body.errors?.find((item) => item.code)?.code;
   } catch {
     message = '';

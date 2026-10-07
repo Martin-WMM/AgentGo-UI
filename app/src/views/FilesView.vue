@@ -13,7 +13,8 @@ import { useWorkspaces } from '../composables/useWorkspaces';
 
 const { t } = useI18n();
 const router = useRouter();
-const { workspaces, createWorkspace, updateWorkspace, listFiles, removeWorkspace } = useWorkspaces();
+const { workspaces, createWorkspace, updateWorkspace, listFiles, removeWorkspace } =
+  useWorkspaces();
 const dialogOpen = ref(false);
 const editing = ref<Workspace | null>(null);
 const deletingWorkspaceId = ref<string | null>(null);

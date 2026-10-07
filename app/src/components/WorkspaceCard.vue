@@ -24,7 +24,9 @@ const { t } = useI18n();
     class="workspace-card group relative flex min-h-52 flex-col overflow-hidden rounded-2xl border border-input bg-background p-5 shadow-sm"
     :style="{ animationDelay: `${index * 75}ms` }"
   >
-    <div class="card-glow absolute -right-12 -top-12 size-36 rounded-full bg-cyan-400/15 blur-2xl" />
+    <div
+      class="card-glow absolute -right-12 -top-12 size-36 rounded-full bg-cyan-400/15 blur-2xl"
+    />
     <Icon
       icon="lucide:stars"
       class="card-stars absolute bottom-4 right-4 text-primary/10"
@@ -67,7 +69,9 @@ const { t } = useI18n();
         </button>
       </div>
     </div>
-    <p class="relative mt-4 line-clamp-3 min-h-10 text-sm text-muted-foreground pointer-events-none">
+    <p
+      class="relative mt-4 line-clamp-3 min-h-10 text-sm text-muted-foreground pointer-events-none"
+    >
       {{ workspace.description || t('files.noDescription') }}
     </p>
     <p
