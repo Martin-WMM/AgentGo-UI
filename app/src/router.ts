@@ -6,7 +6,7 @@ import SettingsView from './views/SettingsView.vue';
 import { useAuthStore } from './stores/auth';
 
 export const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', name: 'home', component: HomeView },
     { path: '/chat', name: 'chat', component: ChatView },
