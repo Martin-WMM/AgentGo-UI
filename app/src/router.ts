@@ -25,7 +25,10 @@ router.beforeEach(async () => {
 
   // After a failed OAuth callback the gateway returns here with ?authError=1.
   // Do not immediately restart login, or the browser looks stuck in a redirect loop.
-  if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('authError')) {
+  if (
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).has('authError')
+  ) {
     return true;
   }
 
