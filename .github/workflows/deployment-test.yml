@@ -60,7 +60,11 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
         run: |
           set -euo pipefail
-          docker build --build-arg "VITE_AGENTGO_BACKEND_URL=http://${DEPLOY_HOST}:20082" \
+          # Browser API calls go through the public gateway path /backend on DEPLOY_HOST IP.
+          # Asset/router base must be /ui/ because the gateway mounts this service at /ui/.
+          docker build \
+            --build-arg "VITE_BASE=/ui/" \
+            --build-arg "VITE_AGENTGO_BACKEND_URL=http://${DEPLOY_HOST}:28080/backend" \
             --tag "$IMAGE_NAME:$IMAGE_TAG" .
           docker push "$IMAGE_NAME:$IMAGE_TAG"
 
@@ -98,11 +102,24 @@ jobs:
           set -euo pipefail
           mkdir -p "$DEPLOY_PATH/agentgo-ui-deployment"
           compose_file="$DEPLOY_PATH/docker-compose.yml"
+          include_line='  - path: ./agentgo-ui-deployment/docker-compose-agentgo-ui.yml'
           if [[ ! -s "$compose_file" ]]; then
-            printf '%s\n' 'include:' > "$compose_file"
+            printf '%s\n' 'include:' "$include_line" > "$compose_file"
+          elif grep -Fqx "$include_line" "$compose_file"; then
+            :
+          elif grep -q '^include:' "$compose_file"; then
+            tmp="$(mktemp)"
+            awk -v line="$include_line" '
+              BEGIN { inserted=0 }
+              /^include:/ { print; print line; inserted=1; next }
+              { print }
+              END { if (!inserted) { print "include:"; print line } }
+            ' "$compose_file" > "$tmp"
+            mv "$tmp" "$compose_file"
+          else
+            echo "Shared compose file exists without an include: block; refusing to append." >&2
+            exit 1
           fi
-          grep -Fqx '  - path: ./agentgo-ui-deployment/docker-compose-agentgo-ui.yml' "$compose_file" || \
-            printf '%s\n' '  - path: ./agentgo-ui-deployment/docker-compose-agentgo-ui.yml' >> "$compose_file"
           REMOTE
           rsync -az --delete -e "ssh -i $KEY_FILE -p $DEPLOY_PORT -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$KNOWN_HOSTS_FILE" \
             agentgo-ui-deployment/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/agentgo-ui-deployment/"
@@ -150,6 +167,7 @@ jobs:
           printf 'AGENTGO_UI_IMAGE_TAG=%s\n' "$IMAGE_TAG" >> .env.next
           mv .env.next .env
           chmod 600 .env
+          docker compose config -q
           [[ "$SERVER_IMAGE_EXISTS" == true ]] || docker compose pull agentgo-ui
           docker compose up -d agentgo-ui
           REMOTE
