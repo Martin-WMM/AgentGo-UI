@@ -7,7 +7,14 @@ const messages = {
   en: {
     brand: 'AgentGo',
     brandTagline: 'Your agent workspace',
-    navigation: { label: 'Primary navigation', home: 'Home', chat: 'Chat', settings: 'Settings' },
+    navigation: {
+      label: 'Primary navigation',
+      home: 'Home',
+      chat: 'Chat',
+      settings: 'Settings',
+      docs: 'Docs',
+    },
+
     console: {
       title: 'Control panel',
       label: 'Workspace control panel',
@@ -61,9 +68,15 @@ const messages = {
       placeholder: 'Message AgentGo...',
       send: 'Send message',
       attach: 'Attach a file',
+      attaching: 'Uploading…',
+      attachSuccess: 'Uploaded “{name}”. Open File management to view it.',
+      attachError: 'Unable to upload the file. Please try again.',
       voice: 'Start voice input',
       suggestions: ['Plan a project', 'Summarize a document', 'Explore an idea'],
+      uploadsWorkspace: 'Home uploads',
+      uploadsWorkspaceDescription: 'Files attached from the home composer.',
     },
+
     chat: {
       title: 'New conversation',
       description: 'Start a focused conversation with your AgentGo assistant.',
@@ -134,7 +147,14 @@ const messages = {
   'zh-CN': {
     brand: 'AgentGo',
     brandTagline: '你的智能体工作空间',
-    navigation: { label: '主导航', home: '首页', chat: '对话', settings: '设置' },
+    navigation: {
+      label: '主导航',
+      home: '首页',
+      chat: '对话',
+      settings: '设置',
+      docs: '文档',
+    },
+
     console: {
       title: '控制面板',
       label: '工作空间控制面板',
@@ -186,9 +206,15 @@ const messages = {
       placeholder: '给 AgentGo 发消息……',
       send: '发送消息',
       attach: '添加文件',
+      attaching: '正在上传…',
+      attachSuccess: '已上传“{name}”。可在文件管理中查看。',
+      attachError: '无法上传文件，请重试。',
       voice: '开始语音输入',
       suggestions: ['规划一个项目', '总结一份文档', '探索一个想法'],
+      uploadsWorkspace: '首页上传',
+      uploadsWorkspaceDescription: '从首页对话框附加的文件。',
     },
+
     chat: { title: '新对话', description: '与 AgentGo 助手开始一次专注的对话。' },
     settings: { title: '基本设置', description: '管理工作空间偏好和已连接的服务。' },
     files: {

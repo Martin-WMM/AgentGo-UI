@@ -2,16 +2,58 @@
 import { Icon } from '@iconify/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
+
+import { useWorkspaces } from '../composables/useWorkspaces';
 
 const { t, tm } = useI18n();
 const router = useRouter();
+const { workspaces, createWorkspace, uploadFile } = useWorkspaces();
 const message = ref('');
+const attachInput = ref<HTMLInputElement | null>(null);
+const attaching = ref(false);
+const attachNotice = ref<string | null>(null);
+const attachFailed = ref(false);
 const suggestions = computed(() => tm('home.suggestions') as string[]);
 
 function startConversation(prompt = message.value) {
   if (!prompt.trim()) return;
   router.push({ name: 'chat', query: { prompt: prompt.trim() } });
+}
+
+function openAttachPicker() {
+  if (attaching.value) return;
+  attachNotice.value = null;
+  attachInput.value?.click();
+}
+
+function ensureUploadsWorkspace() {
+  const existing = workspaces.value.find(
+    (workspace) => workspace.name === t('home.uploadsWorkspace'),
+  );
+  if (existing) return existing;
+  return createWorkspace(t('home.uploadsWorkspace'), t('home.uploadsWorkspaceDescription'));
+}
+
+async function onAttachChange(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+
+  attaching.value = true;
+  attachNotice.value = null;
+  attachFailed.value = false;
+  try {
+    const workspace = ensureUploadsWorkspace();
+    await uploadFile(workspace.id, file);
+    attachNotice.value = t('home.attachSuccess', { name: file.name });
+  } catch {
+    attachFailed.value = true;
+    attachNotice.value = t('home.attachError');
+  } finally {
+    attaching.value = false;
+  }
 }
 </script>
 
@@ -63,11 +105,20 @@ function startConversation(prompt = message.value) {
           <div class="flex items-center gap-1">
             <button
               type="button"
-              class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              :aria-label="t('home.attach')"
+              class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
+              :aria-label="attaching ? t('home.attaching') : t('home.attach')"
+              :disabled="attaching"
+              @click="openAttachPicker"
             >
-              <Icon icon="lucide:paperclip" width="18" height="18" aria-hidden="true" />
+              <Icon
+                :icon="attaching ? 'lucide:loader-circle' : 'lucide:paperclip'"
+                width="18"
+                height="18"
+                aria-hidden="true"
+                :class="attaching ? 'animate-spin' : undefined"
+              />
             </button>
+            <input ref="attachInput" type="file" class="sr-only" @change="onAttachChange" />
             <button
               type="button"
               class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
@@ -86,6 +137,22 @@ function startConversation(prompt = message.value) {
           </button>
         </div>
       </form>
+
+      <p
+        v-if="attachNotice"
+        class="mx-auto mt-3 max-w-xl text-sm"
+        :class="attachFailed ? 'text-destructive' : 'text-muted-foreground'"
+        role="status"
+      >
+        {{ attachNotice }}
+        <RouterLink
+          v-if="!attachFailed"
+          to="/console/files"
+          class="ml-1 font-medium text-foreground underline-offset-4 hover:underline"
+        >
+          {{ t('console.items.files') }}
+        </RouterLink>
+      </p>
 
       <div class="mt-5 flex flex-wrap justify-center gap-2">
         <button
