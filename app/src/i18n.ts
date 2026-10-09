@@ -30,7 +30,23 @@ const messages = {
     },
     language: { label: 'Switch language' },
     theme: { light: 'Switch to light mode', dark: 'Switch to dark mode' },
-    user: { menu: 'Open user menu', signedInAs: 'Signed in as', logout: 'Sign out' },
+    user: {
+      menu: 'Open user menu',
+      signedInAs: 'Signed in as',
+      logout: 'Sign out',
+      signIn: 'Sign in',
+    },
+    auth: {
+      gate: {
+        signedOutTitle: 'You are signed out',
+        signedOutDescription: 'Sign in again to continue using your AgentGo workspace.',
+        errorTitle: 'Sign-in could not be completed',
+        errorDescription:
+          'The authentication callback failed. Sign in again, or contact an administrator if this keeps happening.',
+        signIn: 'Sign in',
+      },
+    },
+
     footer: {
       rights: 'All rights reserved.',
       privacy: 'Privacy',
@@ -141,7 +157,22 @@ const messages = {
     },
     language: { label: '切换语言' },
     theme: { light: '切换到浅色模式', dark: '切换到深色模式' },
-    user: { menu: '打开用户菜单', signedInAs: '当前登录用户', logout: '退出登录' },
+    user: {
+      menu: '打开用户菜单',
+      signedInAs: '当前登录用户',
+      logout: '退出登录',
+      signIn: '登录',
+    },
+    auth: {
+      gate: {
+        signedOutTitle: '你已退出登录',
+        signedOutDescription: '重新登录后即可继续使用 AgentGo 工作空间。',
+        errorTitle: '登录未能完成',
+        errorDescription: '身份认证回调失败。请重新登录；若反复出现，请联系管理员。',
+        signIn: '登录',
+      },
+    },
+
     footer: {
       rights: '保留所有权利。',
       privacy: '隐私政策',

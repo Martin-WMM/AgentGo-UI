@@ -10,13 +10,17 @@ import { useSidebar } from './composables/useSidebar';
 import { useTheme } from './composables/useTheme';
 import { useWorkspaces } from './composables/useWorkspaces';
 import { consoleNavItems } from './navigation';
+import { useAuthStore } from './stores/auth';
 
 const { t } = useI18n();
 const { theme } = useTheme();
 const { openMobile } = useSidebar();
 const { getWorkspace } = useWorkspaces();
+const auth = useAuthStore();
 const route = useRoute();
 const isDark = computed(() => theme.value === 'dark');
+const isAuthGate = computed(() => route.name === 'signed-out' || route.name === 'auth-error');
+const showAppShell = computed(() => auth.isAuthenticated && !isAuthGate.value);
 const logoSource = computed(() =>
   isDark.value ? '/assets/logo-dark.png' : '/assets/logo-light.png',
 );
@@ -40,11 +44,12 @@ const breadcrumbs = computed(() => {
 
 <template>
   <div class="flex min-h-screen bg-background text-foreground">
-    <AppSidebar />
+    <AppSidebar v-if="showAppShell" />
     <div class="flex min-w-0 flex-1 flex-col">
       <header class="sticky top-0 z-30 border-b border-input/70 bg-background/90 backdrop-blur">
         <div class="flex h-16 w-full items-center gap-3 px-4 sm:px-6">
           <button
+            v-if="showAppShell"
             type="button"
             class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden"
             :aria-label="t('console.open')"
@@ -71,7 +76,7 @@ const breadcrumbs = computed(() => {
         </div>
       </header>
       <nav
-        v-if="breadcrumbs.length"
+        v-if="showAppShell && breadcrumbs.length"
         class="flex h-14 items-center border-b border-input/70 bg-background px-4 sm:px-6"
         :aria-label="t('console.label')"
       >
