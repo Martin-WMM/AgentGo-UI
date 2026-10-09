@@ -58,7 +58,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="ml-auto flex items-center gap-1">
-    <div ref="userMenuRoot" class="relative">
+    <div v-if="auth.isAuthenticated" ref="userMenuRoot" class="relative">
       <button
         class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent"
         type="button"
@@ -106,6 +106,15 @@ onBeforeUnmount(() => {
       </div>
     </div>
     <button
+      v-else
+      type="button"
+      class="inline-flex items-center gap-2 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+      @click="auth.login"
+    >
+      <Icon icon="lucide:log-in" width="15" height="15" aria-hidden="true" />
+      {{ t('user.signIn') }}
+    </button>
+    <button
       class="rounded-lg px-2.5 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
       type="button"
       :aria-label="t('language.label')"
@@ -127,6 +136,7 @@ onBeforeUnmount(() => {
       />
     </button>
     <RouterLink
+      v-if="auth.isAuthenticated"
       to="/console/settings"
       class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
       :aria-label="t('navigation.settings')"
