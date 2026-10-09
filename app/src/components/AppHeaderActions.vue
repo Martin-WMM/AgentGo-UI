@@ -114,6 +114,16 @@ onBeforeUnmount(() => {
       <Icon icon="lucide:log-in" width="15" height="15" aria-hidden="true" />
       {{ t('user.signIn') }}
     </button>
+    <a
+      href="/docs/"
+      target="_blank"
+      rel="noreferrer"
+      class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+      :aria-label="t('navigation.docs')"
+    >
+      <Icon icon="lucide:book-open" width="15" height="15" aria-hidden="true" />
+      <span class="hidden sm:inline">{{ t('navigation.docs') }}</span>
+    </a>
     <button
       class="rounded-lg px-2.5 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
       type="button"
