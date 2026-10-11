@@ -1,18 +1,24 @@
 <script setup lang="ts">
+import { Icon } from '@iconify/vue';
 import { Dialog } from '@agentgo/ui';
 import { useI18n } from 'vue-i18n';
+
+import { workspaceColors } from '../lib/workspaceColors';
 
 defineProps<{
   open: boolean;
   title: string;
   name: string;
   description: string;
+  color: string;
+  saving?: boolean;
 }>();
 
 const emit = defineEmits<{
   'update:open': [open: boolean];
   'update:name': [value: string];
   'update:description': [value: string];
+  'update:color': [value: string];
   save: [];
 }>();
 
@@ -43,6 +49,39 @@ const { t } = useI18n();
             @input="emit('update:description', ($event.target as HTMLTextAreaElement).value)"
           />
         </label>
+        <fieldset>
+          <legend class="text-sm font-medium">{{ t('files.workspaceColor') }}</legend>
+          <div class="mt-3 flex flex-wrap gap-2.5" role="presentation">
+            <label
+              v-for="swatch in workspaceColors"
+              :key="swatch.id"
+              class="relative cursor-pointer"
+            >
+              <input
+                class="peer sr-only"
+                type="radio"
+                name="workspace-color"
+                :value="swatch.value"
+                :checked="color === swatch.value"
+                @change="emit('update:color', swatch.value)"
+              />
+              <span
+                class="flex size-9 items-center justify-center rounded-full text-white shadow-sm peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring"
+                :class="color === swatch.value ? 'outline outline-2 outline-offset-2' : ''"
+                :style="{ backgroundColor: swatch.value, outlineColor: swatch.value }"
+              >
+                <Icon
+                  v-if="color === swatch.value"
+                  icon="lucide:check"
+                  width="16"
+                  height="16"
+                  aria-hidden="true"
+                />
+              </span>
+              <span class="sr-only">{{ t(swatch.labelKey) }}</span>
+            </label>
+          </div>
+        </fieldset>
       </div>
       <div class="mt-6 flex justify-end gap-3">
         <button
@@ -54,7 +93,9 @@ const { t } = useI18n();
         </button>
         <button
           type="submit"
-          class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+          class="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+          :style="{ backgroundColor: color }"
+          :disabled="saving"
         >
           {{ t('files.save') }}
         </button>
