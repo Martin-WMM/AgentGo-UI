@@ -78,3 +78,25 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown));
 }
 .dialog-panel-enter-active {
   transition:
+    opacity 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dialog-panel-leave-active {
+  transition:
+    opacity 140ms ease-in,
+    transform 140ms ease-in;
+}
+.dialog-panel-enter-from,
+.dialog-panel-leave-to {
+  opacity: 0;
+  transform: translateY(12px) scale(0.97);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dialog-backdrop-enter-active,
+  .dialog-backdrop-leave-active,
+  .dialog-panel-enter-active,
+  .dialog-panel-leave-active {
+    transition-duration: 1ms;
+  }
+}
+</style>
