@@ -282,52 +282,94 @@ async function saveProfile() {
                 }}</label>
                 <input
                   id="profile-occupation"
+                  v-model="form.occupation"
+                  maxlength="128"
+                  :class="fieldClass"
+                />
+              </div>
+              <div class="space-y-2">
+                <label for="profile-organization" class="text-sm font-medium">{{
+                  t('profile.organization')
+                }}</label>
+                <input
+                  id="profile-organization"
+                  v-model="form.organization"
+                  maxlength="255"
+                  :class="fieldClass"
+                />
+              </div>
+              <div class="space-y-2">
+                <label for="profile-location" class="text-sm font-medium">{{
+                  t('profile.location')
+                }}</label>
+                <input
+                  id="profile-location"
+                  v-model="form.location"
+                  maxlength="255"
+                  :class="fieldClass"
+                />
+              </div>
+              <div class="space-y-2">
+                <label for="profile-homepage" class="text-sm font-medium">{{
+                  t('profile.homepage')
+                }}</label>
+                <input
+                  id="profile-homepage"
+                  v-model="form.homepageUrl"
+                  type="url"
+                  maxlength="2048"
+                  :class="fieldClass"
+                  :placeholder="t('profile.homepagePlaceholder')"
+                />
+              </div>
+              <div class="space-y-2">
+                <label for="profile-timezone" class="text-sm font-medium">{{
+                  t('profile.timezone')
+                }}</label>
+                <input
+                  id="profile-timezone"
+                  v-model="form.timezone"
+                  maxlength="64"
+                  :class="fieldClass"
+                  :placeholder="t('profile.timezonePlaceholder')"
+                />
+              </div>
+              <div class="space-y-2 sm:col-span-2">
+                <label for="profile-language" class="text-sm font-medium">{{
+                  t('profile.language')
+                }}</label>
+                <select id="profile-language" v-model="form.preferredLanguage" :class="fieldClass">
+                  <option value="">{{ t('profile.languageUnset') }}</option>
+                  <option v-if="customLanguage" :value="form.preferredLanguage">
+                    {{ form.preferredLanguage }}
+                  </option>
+                  <option value="en">English</option>
+                  <option value="zh-CN">简体中文</option>
+                </select>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label for="profile-bio" class="text-sm font-medium">{{ t('profile.bio') }}</label>
+              <textarea
+                id="profile-bio"
+                v-model="form.description"
+                maxlength="2000"
+                rows="4"
+                :class="`${fieldClass} resize-y`"
+                :placeholder="t('profile.bioPlaceholder')"
+              />
+            </div>
+          </section>
+
+          <button
+            type="submit"
+            :disabled="saving"
+            class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {{ saving ? t('profile.saving') : t('profile.save') }}
+          </button>
         </div>
-        <div class="space-y-2">
-          <label for="profile-display-name" class="text-sm font-medium">{{
-            t('profile.displayName')
-          }}</label>
-          <input
-            id="profile-display-name"
-            v-model="form.displayName"
-            required
-            maxlength="150"
-            class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-        <div class="space-y-2">
-          <label for="profile-email" class="text-sm font-medium">{{ t('profile.email') }}</label>
-          <input
-            id="profile-email"
-            v-model="form.email"
-            type="email"
-            maxlength="254"
-            class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-        <div class="space-y-2">
-          <label for="profile-avatar" class="text-sm font-medium">{{
-            t('profile.avatarUrl')
-          }}</label>
-          <input
-            id="profile-avatar"
-            v-model="form.avatarUrl"
-            type="url"
-            maxlength="2048"
-            class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-            :placeholder="t('profile.avatarPlaceholder')"
-          />
-        </div>
-        <p v-if="error" role="alert" class="text-sm text-destructive">{{ error }}</p>
-        <p v-if="saved" role="status" class="text-sm text-emerald-600">{{ t('profile.saved') }}</p>
-        <button
-          type="submit"
-          :disabled="saving"
-          class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {{ saving ? t('profile.saving') : t('profile.save') }}
-        </button>
-      </div>
-    </form>
+      </form>
+    </div>
   </section>
 </template>
