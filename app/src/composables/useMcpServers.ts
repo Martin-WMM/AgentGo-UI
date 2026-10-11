@@ -178,3 +178,34 @@ export function useMcpServers() {
     const updated = await apiData<McpServerDto>(`/api/v1/mcpServers/${encodeURIComponent(id)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody(input)),
+    });
+    const server = toServer(updated);
+    servers.value = servers.value.map((item) => (item.id === id ? server : item));
+    return server;
+  }
+
+  async function removeServer(id: string) {
+    await apiRequest(`/api/v1/mcpServers/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    servers.value = servers.value.filter((item) => item.id !== id);
+  }
+
+  async function probeServer(id: string) {
+    const probed = await apiData<McpServerDto>(
+      `/api/v1/mcpServers/${encodeURIComponent(id)}/probe`,
+      { method: 'POST' },
+    );
+    const server = toServer(probed);
+    servers.value = servers.value.map((item) => (item.id === id ? server : item));
+    return server;
+  }
+
+  return {
+    servers: sortedServers,
+    refreshServers,
+    createServer,
+    updateServer,
+    removeServer,
+    probeServer,
+  };
+}
