@@ -38,6 +38,86 @@ const pageTitle = computed(() =>
 const canSave = computed(() => Boolean(form.name.trim() && form.content.trim()) && !saving.value);
 
 onMounted(async () => {
+  if (!templateId.value) return;
+  loading.value = true;
+  try {
+    const template = await getTemplate(templateId.value);
+    form.name = template.name;
+    form.description = template.description;
+    form.engine = template.engine;
+    form.content = template.content;
+    loadFailed.value = false;
+  } catch (caught) {
+    loadFailed.value = true;
+    toastError(t(promptFailureI18n(caught)), t('toast.error'));
+  } finally {
+    loading.value = false;
+  }
+});
+
+function goBack() {
+  void router.push({ name: 'console-prompts' });
+}
+
+async function saveTemplate() {
+  if (!canSave.value) return;
+  saving.value = true;
+  const input = {
+    name: form.name,
+    description: form.description,
+    engine: form.engine,
+    content: form.content,
+  };
+  try {
+    if (templateId.value) {
+      await updateTemplate(templateId.value, input);
+      toastSuccess(t('prompts.updated', { name: form.name.trim() }), t('toast.success'));
+    } else {
+      await createTemplate(input);
+      toastSuccess(t('prompts.created', { name: form.name.trim() }), t('toast.success'));
+    }
+    goBack();
+  } catch (caught) {
+    toastError(t(promptFailureI18n(caught)), t('toast.error'));
+  } finally {
+    saving.value = false;
+  }
+}
+</script>
+
+<template>
+  <section class="mx-auto min-h-[calc(100vh-129px)] w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-start gap-3">
+        <button
+          type="button"
+          class="mt-0.5 rounded-xl border border-input p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          :aria-label="t('prompts.backToList')"
+          @click="goBack"
+        >
+          <Icon icon="lucide:arrow-left" width="18" height="18" aria-hidden="true" />
+        </button>
+        <div>
+          <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">{{ pageTitle }}</h1>
+          <p class="mt-1.5 text-sm text-muted-foreground">{{ t('prompts.editorDescription') }}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 self-end sm:self-auto">
+        <button
+          type="button"
+          class="rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-accent"
+          @click="goBack"
+        >
+          {{ t('prompts.cancel') }}
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/20 disabled:opacity-60"
+          :disabled="!canSave || loading || loadFailed"
+          @click="saveTemplate"
+        >
+          <Icon icon="lucide:save" width="16" height="16" aria-hidden="true" />
+          {{ saving ? t('prompts.saving') : t('prompts.save') }}
         </button>
       </div>
     </div>
@@ -78,28 +158,3 @@ onMounted(async () => {
               v-model="form.engine"
               class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
             >
-              <option v-for="item in engines" :key="item" :value="item">
-                {{ t(`prompts.engines.${item}`) }}
-              </option>
-            </select>
-            <span class="mt-1.5 block text-xs font-normal text-muted-foreground">
-              {{ t(`prompts.engineHint.${form.engine}`) }}
-            </span>
-          </label>
-          <label class="block text-sm font-medium md:col-span-2">
-            {{ t('prompts.descriptionLabel') }}
-            <textarea
-              v-model="form.description"
-              maxlength="2000"
-              rows="2"
-              class="mt-2 w-full resize-none rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
-              :placeholder="t('prompts.descriptionPlaceholder')"
-            />
-          </label>
-        </div>
-      </div>
-
-      <PromptMarkdownEditor v-model="form.content" />
-    </form>
-  </section>
-</template>
