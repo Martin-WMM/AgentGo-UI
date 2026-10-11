@@ -178,3 +178,70 @@ async function confirmDelete() {
         {{ item === 'ALL' ? t('models.allTypes') : t(`models.types.${item}`) }}
       </button>
     </div>
+
+    <p v-if="loading" class="text-sm text-muted-foreground">{{ t('models.loading') }}</p>
+    <div
+      v-else-if="loadFailed"
+      class="rounded-2xl border border-dashed border-input px-6 py-16 text-center"
+    >
+      <h2 class="text-lg font-semibold">{{ t('models.loadError') }}</h2>
+      <button
+        class="mt-5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+        type="button"
+        @click="reload"
+      >
+        {{ t('models.retry') }}
+      </button>
+    </div>
+    <div v-else-if="visibleModels.length" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <ModelCard
+        v-for="(model, index) in visibleModels"
+        :key="model.id"
+        :model="model"
+        :index="index"
+        :deleting="deletingModelId === model.id"
+        @edit="openEdit(model)"
+        @remove="modelToDelete = model"
+      />
+    </div>
+    <div v-else class="rounded-2xl border border-dashed border-input px-6 py-16 text-center">
+      <h2 class="text-lg font-semibold">
+        {{ typeFilter === 'ALL' ? t('models.emptyTitle') : t('models.emptyFilteredTitle') }}
+      </h2>
+      <p class="mt-2 text-sm text-muted-foreground">
+        {{
+          typeFilter === 'ALL'
+            ? t('models.emptyDescription')
+            : t('models.emptyFilteredDescription', { type: t(`models.types.${typeFilter}`) })
+        }}
+      </p>
+      <button
+        class="mt-5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+        type="button"
+        @click="openCreate"
+      >
+        {{ t('models.createModel') }}
+      </button>
+    </div>
+
+    <ModelFormDialog
+      v-model:open="dialogOpen"
+      v-model:name="form.name"
+      v-model:provider="form.provider"
+      v-model:type="form.type"
+      v-model:description="form.description"
+      v-model:configuration="form.configuration"
+      :title="dialogTitle"
+      :saving="saving"
+      @save="saveModel"
+    />
+    <ConfirmActionDialog
+      :open="Boolean(modelToDelete)"
+      :title="t('models.delete')"
+      :description="t('models.confirmDelete', { name: modelToDelete?.name ?? '' })"
+      :confirm-label="t('models.delete')"
+      @update:open="modelToDelete = $event ? modelToDelete : null"
+      @confirm="confirmDelete"
+    />
+  </section>
+</template>
