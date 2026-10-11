@@ -158,3 +158,28 @@ async function saveTemplate() {
               v-model="form.engine"
               class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
             >
+              <option v-for="item in engines" :key="item" :value="item">
+                {{ t(`prompts.engines.${item}`) }}
+              </option>
+            </select>
+            <span class="mt-1.5 block text-xs font-normal text-muted-foreground">
+              {{ t(`prompts.engineHint.${form.engine}`) }}
+            </span>
+          </label>
+          <label class="block text-sm font-medium md:col-span-2">
+            {{ t('prompts.descriptionLabel') }}
+            <textarea
+              v-model="form.description"
+              maxlength="2000"
+              rows="2"
+              class="mt-2 w-full resize-none rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+              :placeholder="t('prompts.descriptionPlaceholder')"
+            />
+          </label>
+        </div>
+      </div>
+
+      <PromptMarkdownEditor v-model="form.content" />
+    </form>
+  </section>
+</template>
