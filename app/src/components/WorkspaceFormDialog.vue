@@ -78,28 +78,3 @@ const { t } = useI18n();
                   aria-hidden="true"
                 />
               </span>
-              <span class="sr-only">{{ t(swatch.labelKey) }}</span>
-            </label>
-          </div>
-        </fieldset>
-      </div>
-      <div class="mt-6 flex justify-end gap-3">
-        <button
-          type="button"
-          class="rounded-lg px-4 py-2 text-sm hover:bg-accent"
-          @click="emit('update:open', false)"
-        >
-          {{ t('files.cancel') }}
-        </button>
-        <button
-          type="submit"
-          class="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
-          :style="{ backgroundColor: color }"
-          :disabled="saving"
-        >
-          {{ t('files.save') }}
-        </button>
-      </div>
-    </form>
-  </Dialog>
-</template>
