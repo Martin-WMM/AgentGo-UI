@@ -1,3 +1,4 @@
+import { backendRequestHeaders } from './locale';
 import { backendBaseUrl } from '../stores/auth';
 
 /** Error raised when a workspace file request is rejected by the backend. */
@@ -34,7 +35,7 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
   const response = await fetch(`${backendBaseUrl}${path}`, {
     ...init,
     credentials: 'include',
-    headers: { Accept: 'application/json', ...init?.headers },
+    headers: backendRequestHeaders(init?.headers),
   });
   if (!response.ok) throw await toFileRequestError(response);
   if (response.status === 204) return undefined as T;
@@ -76,4 +77,15 @@ export function uploadFailureI18n(caught: unknown): { key: string; limit: string
   if (caught.errorCode === 'FILE-014') return { key: 'files.uploadUnreadable', limit };
   if (caught.status === 403) return { key: 'files.uploadForbidden', limit };
   return { key: 'files.uploadError', limit };
+}
+
+/** Maps a workspace API failure onto an i18n message key. */
+export function workspaceFailureI18n(caught: unknown): string {
+  if (!(caught instanceof FileRequestError)) return 'files.workspaceSaveError';
+  if (caught.status === 401 || caught.errorCode === 'AUTH-002') return 'files.workspaceAuthError';
+  if (caught.status === 409 || caught.errorCode === 'WORKSPACE-003') {
+    return 'files.workspaceDuplicateName';
+  }
+  if (caught.status === 400) return 'files.workspaceInvalid';
+  return 'files.workspaceSaveError';
 }
