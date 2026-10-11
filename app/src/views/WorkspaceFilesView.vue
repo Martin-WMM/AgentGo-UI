@@ -118,3 +118,76 @@ onMounted(refresh);
           :style="{ backgroundColor: workspace.color }"
         >
           <Icon icon="lucide:folder" width="22" height="22" aria-hidden="true" />
+        </div>
+        <div>
+          <h1 class="text-3xl font-semibold tracking-tight">{{ workspace.name }}</h1>
+          <p v-if="workspace.description" class="mt-2 text-muted-foreground">
+            {{ workspace.description }}
+          </p>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <label
+          class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
+        >
+          <Icon icon="lucide:upload" width="17" height="17" aria-hidden="true" />{{
+            busy ? t('files.uploading') : t('files.upload')
+          }}
+          <input ref="input" type="file" class="sr-only" :disabled="busy" @change="onUpload" />
+        </label>
+        <button
+          type="button"
+          class="rounded-lg border border-input px-3 py-2.5 text-sm text-destructive hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="files.length > 0 || loading"
+          @click="deleteWorkspaceOpen = true"
+        >
+          {{ t('files.deleteWorkspace') }}
+        </button>
+      </div>
+    </div>
+    <p v-if="files.length" class="mb-4 text-sm text-muted-foreground">
+      {{ t('files.fileCount', { count: files.length }) }}
+    </p>
+    <div v-if="loading" class="py-16 text-center text-sm text-muted-foreground">
+      {{ t('files.loading') }}
+    </div>
+    <WorkspaceFileTable
+      v-else-if="files.length"
+      :files="files"
+      :busy="busy"
+      @download="onDownload"
+      @remove="fileToDelete = $event"
+    />
+    <div v-else class="rounded-2xl border border-dashed border-input px-6 py-16 text-center">
+      <h2 class="text-lg font-semibold">{{ t('files.emptyFilesTitle') }}</h2>
+      <p class="mt-2 text-sm text-muted-foreground">{{ t('files.emptyFilesDescription') }}</p>
+    </div>
+  </section>
+  <section v-else class="mx-auto flex min-h-[calc(100vh-129px)] w-full max-w-3xl items-center px-4">
+    <div class="rounded-2xl border border-input p-8">
+      <h1 class="text-xl font-semibold">{{ t('files.notFound') }}</h1>
+      <button
+        type="button"
+        class="mt-4 text-sm text-primary underline"
+        @click="router.push({ name: 'console-files' })"
+      >
+        {{ t('files.back') }}
+      </button>
+    </div>
+  </section>
+  <ConfirmActionDialog
+    :open="Boolean(fileToDelete)"
+    :title="t('files.delete')"
+    :description="fileToDelete ? t('files.confirmDeleteFile', { name: fileToDelete.name }) : ''"
+    :confirm-label="t('files.delete')"
+    @update:open="fileToDelete = $event ? fileToDelete : null"
+    @confirm="confirmDeleteFile"
+  />
+  <ConfirmActionDialog
+    v-model:open="deleteWorkspaceOpen"
+    :title="t('files.deleteWorkspace')"
+    :description="t('files.confirmDeleteWorkspace')"
+    :confirm-label="t('files.deleteWorkspace')"
+    @confirm="confirmDeleteWorkspace"
+  />
+</template>
