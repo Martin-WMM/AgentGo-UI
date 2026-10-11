@@ -59,10 +59,11 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown));
   width: min(100%, 30rem);
   max-height: calc(100vh - 3rem);
   overflow: auto;
-  border: 1px solid hsl(var(--input));
+  border: 1px solid var(--input);
   border-radius: 1rem;
   padding: 1.5rem;
-  background: hsl(var(--background));
+  color: var(--foreground);
+  background: var(--background);
   box-shadow:
     0 24px 60px rgb(0 0 0 / 0.36),
     0 0 0 1px rgb(255 255 255 / 0.03) inset;

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ToastHost } from '@agentgo/ui';
 import { Icon } from '@iconify/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -37,6 +38,12 @@ const breadcrumbs = computed(() => {
   if (route.name === 'workspace-files') {
     const workspace = getWorkspace(String(route.params.workspaceId));
     items.push({ label: workspace?.name || t('files.notFound'), to: undefined });
+  }
+  if (route.name === 'prompt-template-create') {
+    items.push({ label: t('prompts.createTemplate'), to: undefined });
+  }
+  if (route.name === 'prompt-template-edit') {
+    items.push({ label: t('prompts.editTemplate'), to: undefined });
   }
   return items;
 });
@@ -137,5 +144,6 @@ const breadcrumbs = computed(() => {
         </div>
       </footer>
     </div>
+    <ToastHost :dismiss-label="t('toast.dismiss')" :region-label="t('toast.region')" />
   </div>
 </template>

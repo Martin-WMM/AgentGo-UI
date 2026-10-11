@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { toastError, toastSuccess } from '@agentgo/ui';
 import { Icon } from '@iconify/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { RouterLink, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 
 import { useWorkspaces } from '../composables/useWorkspaces';
+import { DEFAULT_WORKSPACE_COLOR } from '../lib/workspaceColors';
 
 const { t, tm } = useI18n();
 const router = useRouter();
@@ -12,8 +14,6 @@ const { workspaces, createWorkspace, uploadFile } = useWorkspaces();
 const message = ref('');
 const attachInput = ref<HTMLInputElement | null>(null);
 const attaching = ref(false);
-const attachNotice = ref<string | null>(null);
-const attachFailed = ref(false);
 const suggestions = computed(() => tm('home.suggestions') as string[]);
 
 function startConversation(prompt = message.value) {
@@ -23,16 +23,19 @@ function startConversation(prompt = message.value) {
 
 function openAttachPicker() {
   if (attaching.value) return;
-  attachNotice.value = null;
   attachInput.value?.click();
 }
 
-function ensureUploadsWorkspace() {
+async function ensureUploadsWorkspace() {
   const existing = workspaces.value.find(
     (workspace) => workspace.name === t('home.uploadsWorkspace'),
   );
   if (existing) return existing;
-  return createWorkspace(t('home.uploadsWorkspace'), t('home.uploadsWorkspaceDescription'));
+  return createWorkspace(
+    t('home.uploadsWorkspace'),
+    t('home.uploadsWorkspaceDescription'),
+    DEFAULT_WORKSPACE_COLOR,
+  );
 }
 
 async function onAttachChange(event: Event) {
@@ -42,15 +45,12 @@ async function onAttachChange(event: Event) {
   if (!file) return;
 
   attaching.value = true;
-  attachNotice.value = null;
-  attachFailed.value = false;
   try {
-    const workspace = ensureUploadsWorkspace();
+    const workspace = await ensureUploadsWorkspace();
     await uploadFile(workspace.id, file);
-    attachNotice.value = t('home.attachSuccess', { name: file.name });
+    toastSuccess(t('home.attachSuccess', { name: file.name }), t('toast.success'));
   } catch {
-    attachFailed.value = true;
-    attachNotice.value = t('home.attachError');
+    toastError(t('home.attachError'), t('toast.error'));
   } finally {
     attaching.value = false;
   }
@@ -137,22 +137,6 @@ async function onAttachChange(event: Event) {
           </button>
         </div>
       </form>
-
-      <p
-        v-if="attachNotice"
-        class="mx-auto mt-3 max-w-xl text-sm"
-        :class="attachFailed ? 'text-destructive' : 'text-muted-foreground'"
-        role="status"
-      >
-        {{ attachNotice }}
-        <RouterLink
-          v-if="!attachFailed"
-          to="/console/files"
-          class="ml-1 font-medium text-foreground underline-offset-4 hover:underline"
-        >
-          {{ t('console.items.files') }}
-        </RouterLink>
-      </p>
 
       <div class="mt-5 flex flex-wrap justify-center gap-2">
         <button

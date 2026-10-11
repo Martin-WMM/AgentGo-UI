@@ -5,9 +5,14 @@ import ChatView from './views/ChatView.vue';
 import ConsolePlaceholderView from './views/ConsolePlaceholderView.vue';
 import FilesView from './views/FilesView.vue';
 import HomeView from './views/HomeView.vue';
+import McpServersView from './views/McpServersView.vue';
+import ModelsView from './views/ModelsView.vue';
+import PromptsView from './views/PromptsView.vue';
+import PromptTemplateEditorView from './views/PromptTemplateEditorView.vue';
 import SettingsView from './views/SettingsView.vue';
 import WorkspaceFilesView from './views/WorkspaceFilesView.vue';
 import { useAuthStore } from './stores/auth';
+import { useSettingsStore } from './stores/settings';
 
 function hasUnauthenticatedGateQuery(): boolean {
   if (typeof window === 'undefined') return false;
@@ -30,16 +35,26 @@ export const router = createRouter({
       name: 'workspace-files',
       component: WorkspaceFilesView,
     },
-    { path: '/console/models', name: 'console-models', component: ConsolePlaceholderView },
+    { path: '/console/models', name: 'console-models', component: ModelsView },
     {
       path: '/console/connections',
       name: 'console-connections',
       component: ConsolePlaceholderView,
     },
-    { path: '/console/mcp', name: 'console-mcp', component: ConsolePlaceholderView },
+    { path: '/console/mcp', name: 'console-mcp', component: McpServersView },
     { path: '/console/skills', name: 'console-skills', component: ConsolePlaceholderView },
     { path: '/console/a2a', name: 'console-a2a', component: ConsolePlaceholderView },
-    { path: '/console/prompts', name: 'console-prompts', component: ConsolePlaceholderView },
+    { path: '/console/prompts', name: 'console-prompts', component: PromptsView },
+    {
+      path: '/console/prompts/new',
+      name: 'prompt-template-create',
+      component: PromptTemplateEditorView,
+    },
+    {
+      path: '/console/prompts/:id/edit',
+      name: 'prompt-template-edit',
+      component: PromptTemplateEditorView,
+    },
     { path: '/console/apis', name: 'console-apis', component: ConsolePlaceholderView },
   ],
 });
@@ -48,6 +63,7 @@ router.beforeEach(async (to) => {
   const auth = useAuthStore();
   const session = await auth.loadSession();
   if (session.authenticated) {
+    void useSettingsStore().syncFromServer();
     // The session endpoint is sufficient to authorize navigation. Profile data
     // is loaded by the settings view and must not block the home/chat shell.
     if (to.name === 'signed-out' || to.name === 'auth-error') {

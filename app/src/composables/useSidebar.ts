@@ -10,15 +10,15 @@ function readCollapsed(): boolean {
   return localStorage.getItem(STORAGE_KEY) === 'true';
 }
 
+export function setCollapsed(next: boolean) {
+  collapsed.value = next;
+  localStorage.setItem(STORAGE_KEY, String(next));
+}
+
 export function useSidebar() {
   if (!initialized) {
     collapsed.value = readCollapsed();
     initialized = true;
-  }
-
-  function setCollapsed(next: boolean) {
-    collapsed.value = next;
-    localStorage.setItem(STORAGE_KEY, String(next));
   }
 
   function toggleCollapsed() {

@@ -47,3 +47,17 @@ body {
   min-width: 320px;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }
+
+html[data-density='compact'] {
+  font-size: 14px;
+}
+
+html.reduce-motion,
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

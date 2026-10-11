@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { toastError, toastSuccess, toastWarning } from '@agentgo/ui';
 import { Icon } from '@iconify/vue';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -15,22 +16,20 @@ const router = useRouter();
 const { getWorkspace, listFiles, uploadFile, deleteFile, downloadFile, removeWorkspace } =
   useWorkspaces();
 const workspaceId = String(route.params.workspaceId);
-const workspace = getWorkspace(workspaceId);
+const workspace = computed(() => getWorkspace(workspaceId));
 const files = ref<WorkspaceFile[]>([]);
 const loading = ref(true);
 const busy = ref(false);
-const error = ref('');
 const input = ref<HTMLInputElement | null>(null);
 const fileToDelete = ref<WorkspaceFile | null>(null);
 const deleteWorkspaceOpen = ref(false);
 
 async function refresh() {
   loading.value = true;
-  error.value = '';
   try {
     files.value = await listFiles(workspaceId);
   } catch {
-    error.value = t('files.loadError');
+    toastError(t('files.loadError'), t('toast.error'));
   } finally {
     loading.value = false;
   }
@@ -40,13 +39,13 @@ async function onUpload(event: Event) {
   const selected = (event.target as HTMLInputElement).files?.[0];
   if (!selected) return;
   busy.value = true;
-  error.value = '';
   try {
     await uploadFile(workspaceId, selected);
     await refresh();
+    toastSuccess(t('files.uploadSuccess', { name: selected.name }), t('toast.success'));
   } catch (caught) {
     const mapped = uploadFailureI18n(caught);
-    error.value = t(mapped.key, { limit: mapped.limit });
+    toastError(t(mapped.key, { limit: mapped.limit }), t('toast.error'));
   } finally {
     busy.value = false;
     if (input.value) input.value.value = '';
@@ -55,22 +54,38 @@ async function onUpload(event: Event) {
 
 async function confirmDeleteFile() {
   if (!fileToDelete.value) return;
+  const name = fileToDelete.value.name;
   busy.value = true;
   try {
     await deleteFile(fileToDelete.value.path);
     await refresh();
+    toastSuccess(t('files.deleteFileSuccess', { name }), t('toast.success'));
   } catch {
-    error.value = t('files.deleteError');
+    toastError(t('files.deleteError'), t('toast.error'));
   } finally {
     busy.value = false;
     fileToDelete.value = null;
   }
 }
 
-function confirmDeleteWorkspace() {
-  removeWorkspace(workspaceId);
-  deleteWorkspaceOpen.value = false;
-  router.push({ name: 'console-files' });
+async function onDownload(path: string) {
+  try {
+    await downloadFile(path);
+  } catch {
+    toastError(t('files.downloadError'), t('toast.error'));
+  }
+}
+
+async function confirmDeleteWorkspace() {
+  try {
+    await removeWorkspace(workspaceId);
+    deleteWorkspaceOpen.value = false;
+    toastSuccess(t('files.workspaceDeleted'), t('toast.success'));
+    router.push({ name: 'console-files' });
+  } catch {
+    toastWarning(t('files.workspaceNotEmpty'), t('toast.warning'));
+    deleteWorkspaceOpen.value = false;
+  }
 }
 
 onMounted(refresh);
@@ -91,13 +106,25 @@ onMounted(refresh);
       }}
     </button>
     <div
-      class="mb-8 flex flex-col gap-4 overflow-hidden rounded-3xl border border-primary/10 bg-gradient-to-br from-primary/10 via-background to-violet-400/10 p-6 sm:flex-row sm:items-start sm:justify-between"
+      class="mb-8 flex flex-col gap-4 overflow-hidden rounded-3xl border p-6 sm:flex-row sm:items-start sm:justify-between"
+      :style="{
+        borderColor: `color-mix(in srgb, ${workspace.color} 45%, transparent)`,
+        backgroundImage: `linear-gradient(to bottom right, color-mix(in srgb, ${workspace.color} 18%, transparent), transparent)`,
+      }"
     >
-      <div>
-        <h1 class="text-3xl font-semibold tracking-tight">{{ workspace.name }}</h1>
-        <p v-if="workspace.description" class="mt-2 text-muted-foreground">
-          {{ workspace.description }}
-        </p>
+      <div class="flex items-start gap-4">
+        <div
+          class="flex size-12 shrink-0 items-center justify-center rounded-2xl text-white shadow-lg"
+          :style="{ backgroundColor: workspace.color }"
+        >
+          <Icon icon="lucide:folder" width="22" height="22" aria-hidden="true" />
+        </div>
+        <div>
+          <h1 class="text-3xl font-semibold tracking-tight">{{ workspace.name }}</h1>
+          <p v-if="workspace.description" class="mt-2 text-muted-foreground">
+            {{ workspace.description }}
+          </p>
+        </div>
       </div>
       <div class="flex flex-wrap gap-2">
         <label
@@ -121,9 +148,6 @@ onMounted(refresh);
     <p v-if="files.length" class="mb-4 text-sm text-muted-foreground">
       {{ t('files.fileCount', { count: files.length }) }}
     </p>
-    <p v-if="error" role="alert" class="mb-4 rounded-lg bg-red-500/10 p-3 text-sm text-destructive">
-      {{ error }}
-    </p>
     <div v-if="loading" class="py-16 text-center text-sm text-muted-foreground">
       {{ t('files.loading') }}
     </div>
@@ -131,7 +155,7 @@ onMounted(refresh);
       v-else-if="files.length"
       :files="files"
       :busy="busy"
-      @download="downloadFile"
+      @download="onDownload"
       @remove="fileToDelete = $event"
     />
     <div v-else class="rounded-2xl border border-dashed border-input px-6 py-16 text-center">
