@@ -178,3 +178,45 @@ export function usePromptTemplates() {
     // would throw after a successful delete.
     await apiRequest(`/api/v1/promptTemplates/${encodeURIComponent(id)}`, { method: 'DELETE' });
     templates.value = templates.value.filter((item) => item.id !== id);
+  }
+
+  async function previewTemplate(
+    engine: PromptEngine,
+    content: string,
+    variables: Record<string, unknown>,
+  ) {
+    const rendered = await apiData<{ output: string }>('/api/v1/promptTemplates/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ engine, content, variables }),
+    });
+    return rendered.output;
+  }
+
+  async function renderTemplate(id: string, variables: Record<string, unknown>) {
+    const rendered = await apiData<{ output: string }>(`/api/v1/promptTemplates/${id}/render`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ variables }),
+    });
+    return rendered.output;
+  }
+
+  return {
+    templates: sortedTemplates,
+    loaded,
+    page,
+    pageSize,
+    totalElements,
+    totalPages,
+    first,
+    last,
+    refreshTemplates,
+    getTemplate,
+    createTemplate,
+    updateTemplate,
+    removeTemplate,
+    previewTemplate,
+    renderTemplate,
+  };
+}
