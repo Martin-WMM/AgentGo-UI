@@ -47,7 +47,13 @@ function formatUpdatedAt(value: string) {
       class="flex items-center justify-between gap-3 border-b border-input/70 bg-gradient-to-r from-primary/8 via-background to-cyan-400/8 px-5 py-3.5"
     >
       <div class="flex items-center gap-2 text-sm font-medium">
-        <Icon icon="lucide:table-2" width="16" height="16" class="text-primary" aria-hidden="true" />
+        <Icon
+          icon="lucide:table-2"
+          width="16"
+          height="16"
+          class="text-primary"
+          aria-hidden="true"
+        />
         {{ t('prompts.tableTitle') }}
       </div>
       <span
@@ -60,10 +66,14 @@ function formatUpdatedAt(value: string) {
     <div class="overflow-x-auto">
       <table class="w-full min-w-[40rem] text-left text-sm">
         <thead>
-          <tr class="border-b border-input/70 text-xs tracking-wide text-muted-foreground uppercase">
+          <tr
+            class="border-b border-input/70 text-xs tracking-wide text-muted-foreground uppercase"
+          >
             <th class="px-5 py-3.5 font-medium">{{ t('prompts.name') }}</th>
             <th class="hidden px-5 py-3.5 font-medium sm:table-cell">{{ t('prompts.engine') }}</th>
-            <th class="hidden px-5 py-3.5 font-medium md:table-cell">{{ t('prompts.updatedAt') }}</th>
+            <th class="hidden px-5 py-3.5 font-medium md:table-cell">
+              {{ t('prompts.updatedAt') }}
+            </th>
             <th class="px-5 py-3.5 text-right font-medium">
               <span class="sr-only">{{ t('prompts.actions') }}</span>
             </th>
@@ -145,7 +155,10 @@ function formatUpdatedAt(value: string) {
         >
           <Icon icon="lucide:chevron-left" width="16" height="16" aria-hidden="true" />
         </button>
-        <span class="min-w-28 text-center text-xs text-muted-foreground tabular-nums" aria-live="polite">
+        <span
+          class="min-w-28 text-center text-xs text-muted-foreground tabular-nums"
+          aria-live="polite"
+        >
           {{ t('prompts.pageStatus', { page, pages: totalPages }) }}
         </span>
         <button

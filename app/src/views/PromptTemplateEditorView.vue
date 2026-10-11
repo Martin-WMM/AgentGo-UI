@@ -137,7 +137,9 @@ async function saveTemplate() {
       </button>
     </div>
     <form v-else class="space-y-6" @submit.prevent="saveTemplate">
-      <div class="rounded-3xl border border-primary/10 bg-gradient-to-br from-primary/5 via-background to-cyan-400/5 p-5 sm:p-6">
+      <div
+        class="rounded-3xl border border-primary/10 bg-gradient-to-br from-primary/5 via-background to-cyan-400/5 p-5 sm:p-6"
+      >
         <h2 class="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
           {{ t('prompts.basicInfo') }}
         </h2>

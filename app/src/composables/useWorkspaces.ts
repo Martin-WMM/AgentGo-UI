@@ -149,7 +149,9 @@ export function useWorkspaces() {
   }
 
   async function deleteFile(path: string) {
-    await apiRequest(`/api/v1/files/workspace?path=${encodeURIComponent(path)}`, { method: 'DELETE' });
+    await apiRequest(`/api/v1/files/workspace?path=${encodeURIComponent(path)}`, {
+      method: 'DELETE',
+    });
   }
 
   async function downloadFile(path: string) {

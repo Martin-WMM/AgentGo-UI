@@ -57,7 +57,13 @@ function onInput(event: Event) {
       class="flex flex-wrap items-center justify-between gap-3 border-b border-input/80 bg-accent/30 px-4 py-2.5"
     >
       <div class="flex items-center gap-2 text-sm font-medium">
-        <Icon icon="lucide:file-text" width="16" height="16" class="text-primary" aria-hidden="true" />
+        <Icon
+          icon="lucide:file-text"
+          width="16"
+          height="16"
+          class="text-primary"
+          aria-hidden="true"
+        />
         {{ t('prompts.content') }}
       </div>
       <div
@@ -84,10 +90,7 @@ function onInput(event: Event) {
       </div>
     </div>
 
-    <div
-      class="grid min-h-0 flex-1"
-      :class="mode === 'split' ? 'lg:grid-cols-2' : 'grid-cols-1'"
-    >
+    <div class="grid min-h-0 flex-1" :class="mode === 'split' ? 'lg:grid-cols-2' : 'grid-cols-1'">
       <div
         v-if="mode !== 'preview'"
         class="relative min-h-[22rem] border-input lg:min-h-0"

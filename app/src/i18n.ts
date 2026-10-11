@@ -229,8 +229,7 @@ const messages = {
       title: 'MCP server management',
       description:
         'Register remote MCP servers over Streamable HTTP. Local/stdio servers are not supported.',
-      formHint:
-        'Provide a single MCP endpoint URL that accepts Streamable HTTP POST and GET.',
+      formHint: 'Provide a single MCP endpoint URL that accepts Streamable HTTP POST and GET.',
       statusFilterLabel: 'Connection status',
       allStatuses: 'All',
       createServer: 'Add MCP server',
@@ -296,7 +295,8 @@ const messages = {
       description: 'Manage reusable prompt templates with Markdown, placeholders, or Jinja2.',
       createTemplate: 'Create template',
       editTemplate: 'Edit template',
-      editorDescription: 'Provide basic information and the template body. Markdown preview updates as you write.',
+      editorDescription:
+        'Provide basic information and the template body. Markdown preview updates as you write.',
       basicInfo: 'Basic information',
       name: 'Name',
       namePlaceholder: 'e.g. Default system prompt',
