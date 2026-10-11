@@ -162,20 +162,126 @@ async function saveProfile() {
           <p class="mt-1 text-sm text-muted-foreground">{{ t('profile.description') }}</p>
         </div>
 
-      <div v-if="loading" class="text-sm text-muted-foreground">{{ t('profile.loading') }}</div>
-      <div v-else class="space-y-5">
-        <div class="space-y-2">
-          <label for="profile-username" class="text-sm font-medium">{{
-            t('profile.username')
-          }}</label>
-          <input
-            id="profile-username"
-            v-model="username"
-            disabled
-            class="w-full rounded-lg border border-input bg-muted px-3 py-2 text-sm"
-            :placeholder="t('profile.managedByAuthentik')"
-          />
-          <p class="text-xs text-muted-foreground">{{ t('profile.usernameHint') }}</p>
+        <div v-if="loading" class="text-sm text-muted-foreground">{{ t('profile.loading') }}</div>
+        <div v-else class="space-y-8">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <span
+              class="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-lg font-bold text-white"
+            >
+              <img v-if="displayUrl" :src="displayUrl" alt="" class="size-full object-cover" />
+              <span v-else>{{ initials }}</span>
+            </span>
+            <div class="min-w-0 flex-1 space-y-3">
+              <div class="flex flex-wrap items-center gap-3">
+                <label
+                  class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm font-medium hover:bg-accent"
+                >
+                  <Icon icon="lucide:upload" width="16" height="16" aria-hidden="true" />
+                  {{ uploading ? t('profile.avatarUploading') : t('profile.avatarUpload') }}
+                  <input
+                    class="sr-only"
+                    type="file"
+                    accept="image/*"
+                    :disabled="uploading"
+                    @change="onAvatarSelected"
+                  />
+                </label>
+                <p v-if="isDataAvatar" class="text-xs text-muted-foreground">
+                  {{ t('profile.avatarFromAuthentik') }}
+                </p>
+              </div>
+              <div class="space-y-2">
+                <label for="profile-avatar" class="text-sm font-medium">{{
+                  t('profile.avatarUrl')
+                }}</label>
+                <input
+                  id="profile-avatar"
+                  v-model="avatarUrlInput"
+                  type="text"
+                  inputmode="url"
+                  maxlength="2048"
+                  :class="fieldClass"
+                  :placeholder="
+                    isDataAvatar
+                      ? t('profile.avatarDataPlaceholder')
+                      : t('profile.avatarPlaceholder')
+                  "
+                />
+              </div>
+            </div>
+          </div>
+
+          <section class="space-y-5">
+            <div>
+              <h3 class="text-base font-semibold">{{ t('profile.account') }}</h3>
+              <p class="mt-1 text-sm text-muted-foreground">{{ t('profile.accountHint') }}</p>
+            </div>
+            <div class="space-y-2">
+              <label for="profile-username" class="text-sm font-medium">{{
+                t('profile.username')
+              }}</label>
+              <input
+                id="profile-username"
+                v-model="username"
+                disabled
+                class="w-full rounded-lg border border-input bg-muted px-3 py-2 text-sm"
+                :placeholder="t('profile.managedByAuthentik')"
+              />
+              <p class="text-xs text-muted-foreground">{{ t('profile.usernameHint') }}</p>
+            </div>
+            <div class="grid gap-5 sm:grid-cols-2">
+              <div class="space-y-2">
+                <label for="profile-display-name" class="text-sm font-medium">{{
+                  t('profile.displayName')
+                }}</label>
+                <input
+                  id="profile-display-name"
+                  v-model="form.displayName"
+                  required
+                  maxlength="150"
+                  :class="fieldClass"
+                />
+              </div>
+              <div class="space-y-2">
+                <label for="profile-email" class="text-sm font-medium">{{
+                  t('profile.email')
+                }}</label>
+                <input
+                  id="profile-email"
+                  v-model="form.email"
+                  type="email"
+                  maxlength="254"
+                  :class="fieldClass"
+                />
+              </div>
+            </div>
+          </section>
+
+          <section class="space-y-5">
+            <div>
+              <h3 class="text-base font-semibold">{{ t('profile.personal') }}</h3>
+              <p class="mt-1 text-sm text-muted-foreground">{{ t('profile.personalHint') }}</p>
+            </div>
+            <div class="grid gap-5 sm:grid-cols-2">
+              <div class="space-y-2">
+                <label for="profile-phone" class="text-sm font-medium">{{
+                  t('profile.phone')
+                }}</label>
+                <input
+                  id="profile-phone"
+                  v-model="form.phoneNumber"
+                  type="tel"
+                  maxlength="32"
+                  autocomplete="tel"
+                  :class="fieldClass"
+                />
+              </div>
+              <div class="space-y-2">
+                <label for="profile-occupation" class="text-sm font-medium">{{
+                  t('profile.occupation')
+                }}</label>
+                <input
+                  id="profile-occupation"
         </div>
         <div class="space-y-2">
           <label for="profile-display-name" class="text-sm font-medium">{{
