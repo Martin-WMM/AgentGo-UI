@@ -178,3 +178,109 @@ async function runProbe(server: ManagedMcpServer) {
         >
           <Icon icon="lucide:server" width="22" height="22" aria-hidden="true" />
         </div>
+        <div>
+          <h1 class="text-3xl font-semibold tracking-tight">{{ t('mcp.title') }}</h1>
+          <p class="mt-2 text-muted-foreground">{{ t('mcp.description') }}</p>
+        </div>
+      </div>
+      <button
+        class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/20"
+        type="button"
+        @click="openCreate"
+      >
+        <Icon icon="lucide:plus" width="18" height="18" aria-hidden="true" />
+        {{ t('mcp.createServer') }}
+      </button>
+    </div>
+
+    <div class="mb-6 flex flex-wrap gap-2" role="tablist" :aria-label="t('mcp.statusFilterLabel')">
+      <button
+        v-for="item in filters"
+        :key="item"
+        type="button"
+        role="tab"
+        class="rounded-full border px-3 py-1.5 text-sm font-medium"
+        :class="
+          item === statusFilter
+            ? 'border-primary bg-primary text-primary-foreground'
+            : 'border-input bg-background text-muted-foreground hover:bg-accent hover:text-foreground'
+        "
+        :aria-selected="item === statusFilter"
+        @click="statusFilter = item"
+      >
+        {{ item === 'ALL' ? t('mcp.allStatuses') : t(`mcp.statuses.${item}`) }}
+      </button>
+    </div>
+
+    <p v-if="loading" class="text-sm text-muted-foreground">{{ t('mcp.loading') }}</p>
+    <div
+      v-else-if="loadFailed"
+      class="rounded-2xl border border-dashed border-input px-6 py-16 text-center"
+    >
+      <h2 class="text-lg font-semibold">{{ t('mcp.loadError') }}</h2>
+      <button
+        class="mt-5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+        type="button"
+        @click="reload"
+      >
+        {{ t('mcp.retry') }}
+      </button>
+    </div>
+    <div v-else-if="visibleServers.length" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <McpServerCard
+        v-for="(server, index) in visibleServers"
+        :key="server.id"
+        :server="server"
+        :index="index"
+        :deleting="deletingServerId === server.id"
+        :probing="probingServerId === server.id"
+        @edit="openEdit(server)"
+        @remove="serverToDelete = server"
+        @probe="runProbe(server)"
+      />
+    </div>
+    <div v-else class="rounded-2xl border border-dashed border-input px-6 py-16 text-center">
+      <h2 class="text-lg font-semibold">
+        {{ statusFilter === 'ALL' ? t('mcp.emptyTitle') : t('mcp.emptyFilteredTitle') }}
+      </h2>
+      <p class="mt-2 text-sm text-muted-foreground">
+        {{
+          statusFilter === 'ALL'
+            ? t('mcp.emptyDescription')
+            : t('mcp.emptyFilteredDescription', { status: t(`mcp.statuses.${statusFilter}`) })
+        }}
+      </p>
+      <button
+        class="mt-5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+        type="button"
+        @click="openCreate"
+      >
+        {{ t('mcp.createServer') }}
+      </button>
+    </div>
+
+    <McpServerFormDialog
+      v-model:open="dialogOpen"
+      v-model:name="form.name"
+      v-model:endpoint-url="form.endpointUrl"
+      v-model:auth-type="form.authType"
+      v-model:auth-token="form.authToken"
+      v-model:auth-header-name="form.authHeaderName"
+      v-model:custom-headers="form.customHeaders"
+      v-model:protocol-version="form.protocolVersion"
+      v-model:enabled="form.enabled"
+      v-model:description="form.description"
+      :title="dialogTitle"
+      :saving="saving"
+      @save="saveServer"
+    />
+    <ConfirmActionDialog
+      :open="Boolean(serverToDelete)"
+      :title="t('mcp.delete')"
+      :description="t('mcp.confirmDelete', { name: serverToDelete?.name ?? '' })"
+      :confirm-label="t('mcp.delete')"
+      @update:open="serverToDelete = $event ? serverToDelete : null"
+      @confirm="confirmDelete"
+    />
+  </section>
+</template>
