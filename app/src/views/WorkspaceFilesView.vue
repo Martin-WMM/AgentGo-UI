@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { toastError, toastSuccess, toastWarning } from '@agentgo/ui';
 import { Icon } from '@iconify/vue';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -15,22 +16,20 @@ const router = useRouter();
 const { getWorkspace, listFiles, uploadFile, deleteFile, downloadFile, removeWorkspace } =
   useWorkspaces();
 const workspaceId = String(route.params.workspaceId);
-const workspace = getWorkspace(workspaceId);
+const workspace = computed(() => getWorkspace(workspaceId));
 const files = ref<WorkspaceFile[]>([]);
 const loading = ref(true);
 const busy = ref(false);
-const error = ref('');
 const input = ref<HTMLInputElement | null>(null);
 const fileToDelete = ref<WorkspaceFile | null>(null);
 const deleteWorkspaceOpen = ref(false);
 
 async function refresh() {
   loading.value = true;
-  error.value = '';
   try {
     files.value = await listFiles(workspaceId);
   } catch {
-    error.value = t('files.loadError');
+    toastError(t('files.loadError'), t('toast.error'));
   } finally {
     loading.value = false;
   }
@@ -40,13 +39,13 @@ async function onUpload(event: Event) {
   const selected = (event.target as HTMLInputElement).files?.[0];
   if (!selected) return;
   busy.value = true;
-  error.value = '';
   try {
     await uploadFile(workspaceId, selected);
     await refresh();
+    toastSuccess(t('files.uploadSuccess', { name: selected.name }), t('toast.success'));
   } catch (caught) {
     const mapped = uploadFailureI18n(caught);
-    error.value = t(mapped.key, { limit: mapped.limit });
+    toastError(t(mapped.key, { limit: mapped.limit }), t('toast.error'));
   } finally {
     busy.value = false;
     if (input.value) input.value.value = '';
@@ -55,69 +54,10 @@ async function onUpload(event: Event) {
 
 async function confirmDeleteFile() {
   if (!fileToDelete.value) return;
+  const name = fileToDelete.value.name;
   busy.value = true;
   try {
     await deleteFile(fileToDelete.value.path);
-    await refresh();
-  } catch {
-    error.value = t('files.deleteError');
-  } finally {
-    busy.value = false;
-    fileToDelete.value = null;
-  }
-}
-
-function confirmDeleteWorkspace() {
-  removeWorkspace(workspaceId);
-  deleteWorkspaceOpen.value = false;
-  router.push({ name: 'console-files' });
-}
-
-onMounted(refresh);
-</script>
-
-<template>
-  <section
-    v-if="workspace"
-    class="mx-auto min-h-[calc(100vh-129px)] w-full max-w-6xl px-4 py-10 sm:px-6"
-  >
-    <button
-      type="button"
-      class="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-      @click="router.push({ name: 'console-files' })"
-    >
-      <Icon icon="lucide:arrow-left" width="16" height="16" aria-hidden="true" />{{
-        t('files.back')
-      }}
-    </button>
-    <div
-      class="mb-8 flex flex-col gap-4 overflow-hidden rounded-3xl border border-primary/10 bg-gradient-to-br from-primary/10 via-background to-violet-400/10 p-6 sm:flex-row sm:items-start sm:justify-between"
-    >
-      <div>
-        <h1 class="text-3xl font-semibold tracking-tight">{{ workspace.name }}</h1>
-        <p v-if="workspace.description" class="mt-2 text-muted-foreground">
-          {{ workspace.description }}
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <label
-          class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
-        >
-          <Icon icon="lucide:upload" width="17" height="17" aria-hidden="true" />{{
-            busy ? t('files.uploading') : t('files.upload')
-          }}
-          <input ref="input" type="file" class="sr-only" :disabled="busy" @change="onUpload" />
-        </label>
-        <button
-          type="button"
-          class="rounded-lg border border-input px-3 py-2.5 text-sm text-destructive hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
-          :disabled="files.length > 0 || loading"
-          @click="deleteWorkspaceOpen = true"
-        >
-          {{ t('files.deleteWorkspace') }}
-        </button>
-      </div>
-    </div>
     <p v-if="files.length" class="mb-4 text-sm text-muted-foreground">
       {{ t('files.fileCount', { count: files.length }) }}
     </p>
