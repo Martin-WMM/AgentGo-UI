@@ -78,32 +78,3 @@ export function toast(options: ToastOptions): string {
       setTimeout(() => {
         dismissToast(id);
       }, item.duration),
-    );
-  }
-
-  return id;
-}
-
-/** Convenience helper for a success toast. */
-export function toastSuccess(message: string, title?: string) {
-  return toast({ variant: 'success', message, title });
-}
-
-/** Convenience helper for an error toast. */
-export function toastError(message: string, title?: string) {
-  return toast({ variant: 'error', message, title });
-}
-
-/** Convenience helper for a warning toast. */
-export function toastWarning(message: string, title?: string) {
-  return toast({ variant: 'warning', message, title });
-}
-
-/**
- * Reactive list of currently visible toasts for `ToastHost`.
- *
- * @returns readonly ref of active toast items
- */
-export function useToasts() {
-  return readonly(toasts);
-}
