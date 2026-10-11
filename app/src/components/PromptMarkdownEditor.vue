@@ -118,3 +118,75 @@ function onInput(event: Event) {
         <div
           v-if="previewHtml"
           class="prompt-md-preview max-w-none text-sm leading-relaxed"
+          v-html="previewHtml"
+        />
+        <p v-else class="text-sm text-muted-foreground">{{ t('prompts.markdownPreviewEmpty') }}</p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.prompt-source-overlay :deep(.prompt-placeholder) {
+  color: color-mix(in oklab, var(--color-muted-foreground) 70%, transparent);
+}
+
+.prompt-source-overlay :deep(mark.prompt-token) {
+  color: var(--color-primary);
+  background: color-mix(in oklab, var(--color-primary) 18%, transparent);
+  border-radius: 0.25rem;
+  box-decoration-break: clone;
+}
+
+.prompt-source-overlay :deep(.prompt-md-heading) {
+  color: color-mix(in oklab, var(--color-foreground) 88%, var(--color-primary));
+  font-weight: 600;
+}
+
+.prompt-source-overlay :deep(.prompt-md-inline-code) {
+  color: color-mix(in oklab, var(--color-foreground) 70%, #0d9488);
+  background: color-mix(in oklab, #0d9488 12%, transparent);
+  border-radius: 0.2rem;
+}
+
+.prompt-source-overlay :deep(.prompt-md-strong) {
+  font-weight: 700;
+}
+
+.prompt-md-preview :deep(pre.prompt-md-pre) {
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--color-border, currentColor) 40%, transparent);
+  background: color-mix(in oklab, var(--color-accent) 55%, transparent);
+  padding: 0.85rem 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.prompt-md-preview :deep(code:not(.hljs)) {
+  border-radius: 0.35rem;
+  background: color-mix(in oklab, var(--color-accent) 70%, transparent);
+  padding: 0.1rem 0.35rem;
+  font-size: 0.85em;
+}
+
+.prompt-md-preview :deep(h1),
+.prompt-md-preview :deep(h2),
+.prompt-md-preview :deep(h3) {
+  margin-top: 1.1em;
+  margin-bottom: 0.45em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.prompt-md-preview :deep(p),
+.prompt-md-preview :deep(ul),
+.prompt-md-preview :deep(ol) {
+  margin: 0.65em 0;
+}
+
+.prompt-md-preview :deep(.hljs) {
+  background: transparent;
+  color: inherit;
+}
+</style>
