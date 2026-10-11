@@ -4,16 +4,21 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
 
+import { useAuthenticatedImage } from '../composables/useAuthenticatedImage';
 import { useTheme } from '../composables/useTheme';
 import { useAuthStore } from '../stores/auth';
+import { useSettingsStore } from '../stores/settings';
 
 const { locale, t } = useI18n();
-const { theme, toggleTheme } = useTheme();
+const { theme } = useTheme();
 const auth = useAuthStore();
+const settings = useSettingsStore();
 const userMenuOpen = ref(false);
 const userMenuRoot = ref<HTMLElement | null>(null);
 const isDark = computed(() => theme.value === 'dark');
 const userName = computed(() => auth.user?.name || auth.user?.email || '');
+const picture = computed(() => auth.avatarUrl);
+const { displayUrl: avatarUrl } = useAuthenticatedImage(picture);
 const userInitials = computed(() => {
   const initials = userName.value
     .split(/\s+/)
@@ -26,8 +31,11 @@ const userInitials = computed(() => {
 });
 
 function setLocale(nextLocale: 'en' | 'zh-CN') {
-  locale.value = nextLocale;
-  localStorage.setItem('agentgo-locale', nextLocale);
+  void settings.update({ locale: nextLocale });
+}
+
+function onToggleTheme() {
+  void settings.update({ theme: theme.value === 'dark' ? 'light' : 'dark' });
 }
 
 function closeUserMenu() {
@@ -69,12 +77,7 @@ onBeforeUnmount(() => {
         <span
           class="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-xs font-bold text-white"
         >
-          <img
-            v-if="auth.user?.picture"
-            :src="auth.user.picture"
-            :alt="userName"
-            class="size-full object-cover"
-          />
+          <img v-if="avatarUrl" :src="avatarUrl" :alt="userName" class="size-full object-cover" />
           <span v-else>{{ userInitials }}</span>
         </span>
         <span class="hidden max-w-32 truncate text-sm font-medium lg:block">{{ userName }}</span>
@@ -136,7 +139,7 @@ onBeforeUnmount(() => {
       class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
       type="button"
       :aria-label="isDark ? t('theme.light') : t('theme.dark')"
-      @click="toggleTheme"
+      @click="onToggleTheme"
     >
       <Icon
         :icon="isDark ? 'lucide:sun' : 'lucide:moon'"

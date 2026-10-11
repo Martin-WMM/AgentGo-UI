@@ -6,10 +6,12 @@ import { RouterLink, useRoute } from 'vue-router';
 
 import { useSidebar } from '../composables/useSidebar';
 import { consoleNavItems } from '../navigation';
+import { useSettingsStore } from '../stores/settings';
 
 const { t } = useI18n();
 const route = useRoute();
-const { collapsed, mobileOpen, toggleCollapsed, closeMobile } = useSidebar();
+const { collapsed, mobileOpen, closeMobile } = useSidebar();
+const settings = useSettingsStore();
 
 function onKeyDown(event: KeyboardEvent) {
   if (event.key === 'Escape') closeMobile();
@@ -50,7 +52,7 @@ function isActive(path: string) {
           class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           :aria-label="collapsed ? t('console.expand') : t('console.collapse')"
           :aria-expanded="!collapsed"
-          @click="toggleCollapsed"
+          @click="settings.update({ sidebarCollapsed: !collapsed })"
         >
           <Icon
             :icon="collapsed ? 'lucide:panel-left-open' : 'lucide:panel-left-close'"
