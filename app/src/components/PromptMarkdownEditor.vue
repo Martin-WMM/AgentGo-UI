@@ -178,3 +178,15 @@ function onInput(event: Event) {
   font-weight: 600;
   letter-spacing: -0.01em;
 }
+
+.prompt-md-preview :deep(p),
+.prompt-md-preview :deep(ul),
+.prompt-md-preview :deep(ol) {
+  margin: 0.65em 0;
+}
+
+.prompt-md-preview :deep(.hljs) {
+  background: transparent;
+  color: inherit;
+}
+</style>
