@@ -21,11 +21,17 @@ const { t } = useI18n();
 
 <template>
   <article
-    class="workspace-card group relative flex min-h-52 flex-col overflow-hidden rounded-2xl border border-input bg-background p-5 shadow-sm"
-    :style="{ animationDelay: `${index * 75}ms` }"
+    class="workspace-card group relative flex min-h-52 flex-col overflow-hidden rounded-2xl border bg-background p-5 shadow-sm"
+    :style="{
+      animationDelay: `${index * 75}ms`,
+      borderColor: `color-mix(in srgb, ${workspace.color} 55%, transparent)`,
+      backgroundImage: `linear-gradient(160deg, color-mix(in srgb, ${workspace.color} 14%, transparent), transparent 42%)`,
+    }"
   >
+    <div class="absolute inset-x-0 top-0 h-1.5" :style="{ backgroundColor: workspace.color }" />
     <div
-      class="card-glow absolute -right-12 -top-12 size-36 rounded-full bg-cyan-400/15 blur-2xl"
+      class="card-glow absolute -right-12 -top-12 size-36 rounded-full blur-2xl"
+      :style="{ backgroundColor: `color-mix(in srgb, ${workspace.color} 35%, transparent)` }"
     />
     <Icon
       icon="lucide:stars"
@@ -43,7 +49,8 @@ const { t } = useI18n();
     <div class="relative flex items-start justify-between gap-3 pointer-events-none">
       <div class="flex min-w-0 items-center gap-3">
         <div
-          class="folder-icon flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
+          class="folder-icon flex size-11 shrink-0 items-center justify-center rounded-xl text-white shadow-sm"
+          :style="{ backgroundColor: workspace.color }"
         >
           <Icon icon="lucide:folder" width="22" height="22" aria-hidden="true" />
         </div>
