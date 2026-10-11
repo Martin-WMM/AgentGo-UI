@@ -26,6 +26,18 @@ pnpm build
 
 Run commands from the repository root so pnpm resolves all workspace packages.
 
+## Environments (dev / local / test)
+
+Align with the workspace `AGENTS.md` promotion flow: **dev → local → git/PR → test**.
+
+| Env | Backend URL (`VITE_AGENTGO_BACKEND_URL`) | `VITE_BASE` | Notes |
+| --- | --- | --- | --- |
+| **dev** | `http://localhost:8080` (default) | `/` | Vite `:5173`. See `.env.development.example`. |
+| **local** | `http://localhost:20082` | `/` | Built into Compose UI image; ports `20080`/`20082`. |
+| **test** | `http://{DEPLOY_HOST}:28080/backend` | `/ui/` | Set by **Deployment TEST** workflow build-args. |
+
+Do not point Vite at the Compose UI port or mix `5173` UI with `20082` backend unless debugging a specific cross-env issue. Login/logout must be verified in each env before promoting.
+
 ## UI conventions
 
 - Put reusable UI primitives in `packages/ui`.
