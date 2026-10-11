@@ -1,49 +1,139 @@
 <script setup lang="ts">
+import { toastError, toastSuccess } from '@agentgo/ui';
 import { Icon } from '@iconify/vue';
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import { useAuthStore } from '../stores/auth';
+import { apiRequest } from '../api/fileRequest';
+import SystemSettingsPanel from '../components/SystemSettingsPanel.vue';
+import { useAuthenticatedImage } from '../composables/useAuthenticatedImage';
+import { backendBaseUrl, useAuthStore } from '../stores/auth';
 
 const { t } = useI18n();
 const auth = useAuthStore();
 const loading = ref(true);
 const saving = ref(false);
-const error = ref('');
-const saved = ref(false);
+const uploading = ref(false);
 const username = ref('');
-const form = reactive({ displayName: '', email: '', avatarUrl: '' });
+const form = reactive({
+  displayName: '',
+  email: '',
+  avatarUrl: '',
+  phoneNumber: '',
+  description: '',
+  occupation: '',
+  organization: '',
+  homepageUrl: '',
+  location: '',
+  timezone: '',
+  preferredLanguage: '',
+});
+
+const fieldClass =
+  'w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring';
+const avatarSource = computed(() => {
+  if (loading.value) return '';
+  return form.avatarUrl.trim() || `${backendBaseUrl}/api/v1/files/avatar`;
+});
+const { displayUrl } = useAuthenticatedImage(avatarSource);
+const initials = computed(() => {
+  const letters = (form.displayName || username.value)
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+  return letters || '?';
+});
+const customLanguage = computed(
+  () =>
+    form.preferredLanguage !== '' &&
+    form.preferredLanguage !== 'en' &&
+    form.preferredLanguage !== 'zh-CN',
+);
+const isDataAvatar = computed(() => form.avatarUrl.trim().toLowerCase().startsWith('data:image/'));
+const avatarUrlInput = computed({
+  get: () => (isDataAvatar.value ? '' : form.avatarUrl),
+  set: (value: string) => {
+    form.avatarUrl = value;
+  },
+});
+
+function emptyToNull(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : null;
+}
+
+function applyProfile(profile: Awaited<ReturnType<typeof auth.loadProfile>>) {
+  username.value = profile.username;
+  form.displayName = profile.displayName;
+  form.email = profile.email ?? '';
+  form.avatarUrl = profile.avatarUrl ?? '';
+  form.phoneNumber = profile.phoneNumber ?? '';
+  form.description = profile.description ?? '';
+  form.occupation = profile.occupation ?? '';
+  form.organization = profile.organization ?? '';
+  form.homepageUrl = profile.homepageUrl ?? '';
+  form.location = profile.location ?? '';
+  form.timezone = profile.timezone ?? '';
+  form.preferredLanguage = profile.preferredLanguage ?? '';
+}
 
 onMounted(async () => {
   try {
-    const profile = await auth.loadProfile();
-    username.value = profile.username;
-    form.displayName = profile.displayName;
-    form.email = profile.email ?? '';
-    form.avatarUrl = profile.avatarUrl ?? '';
-  } catch {
-    error.value = t('profile.loadError');
+    applyProfile(await auth.loadProfile());
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : '';
+    toastError(detail || t('profile.loadError'), t('toast.error'));
   } finally {
     loading.value = false;
   }
 });
 
+async function onAvatarSelected(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+  uploading.value = true;
+  try {
+    const body = new FormData();
+    body.append('file', file);
+    await apiRequest('/api/v1/files/avatar', { method: 'PUT', body });
+    form.avatarUrl = `${backendBaseUrl}/api/v1/files/avatar`;
+    auth.setAvatarUrl(form.avatarUrl);
+    toastSuccess(t('profile.avatarUploaded'), t('toast.success'));
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : '';
+    toastError(detail || t('profile.avatarUploadError'), t('toast.error'));
+  } finally {
+    uploading.value = false;
+  }
+}
+
 async function saveProfile() {
   saving.value = true;
-  saved.value = false;
-  error.value = '';
   try {
     const profile = await auth.updateProfile({
-      displayName: form.displayName,
-      email: form.email || undefined,
-      avatarUrl: form.avatarUrl || undefined,
+      displayName: form.displayName.trim(),
+      email: emptyToNull(form.email),
+      // Authentik default data: avatars are display-only; do not send them back as updates.
+      avatarUrl: isDataAvatar.value ? null : emptyToNull(form.avatarUrl),
+      phoneNumber: emptyToNull(form.phoneNumber),
+      description: emptyToNull(form.description),
+      occupation: emptyToNull(form.occupation),
+      organization: emptyToNull(form.organization),
+      homepageUrl: emptyToNull(form.homepageUrl),
+      location: emptyToNull(form.location),
+      timezone: emptyToNull(form.timezone),
+      preferredLanguage: emptyToNull(form.preferredLanguage),
     });
-    form.displayName = profile.displayName;
-    form.email = profile.email ?? '';
-    form.avatarUrl = profile.avatarUrl ?? '';
-    saved.value = true;
-  } catch {
-    error.value = t('profile.saveError');
+    applyProfile(profile);
+    toastSuccess(t('profile.saved'), t('toast.success'));
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : '';
+    toastError(detail || t('profile.saveError'), t('toast.error'));
   } finally {
     saving.value = false;
   }
@@ -61,14 +151,16 @@ async function saveProfile() {
         <p class="mt-2 text-muted-foreground">{{ t('settings.description') }}</p>
       </div>
     </div>
-    <form
-      class="space-y-6 rounded-2xl border border-input bg-background p-6"
-      @submit.prevent="saveProfile"
-    >
-      <div>
-        <h2 class="text-lg font-semibold">{{ t('profile.title') }}</h2>
-        <p class="mt-1 text-sm text-muted-foreground">{{ t('profile.description') }}</p>
-      </div>
+    <div class="space-y-8">
+      <SystemSettingsPanel />
+      <form
+        class="space-y-8 rounded-2xl border border-input bg-background p-6"
+        @submit.prevent="saveProfile"
+      >
+        <div>
+          <h2 class="text-lg font-semibold">{{ t('profile.title') }}</h2>
+          <p class="mt-1 text-sm text-muted-foreground">{{ t('profile.description') }}</p>
+        </div>
 
       <div v-if="loading" class="text-sm text-muted-foreground">{{ t('profile.loading') }}</div>
       <div v-else class="space-y-5">
