@@ -148,3 +148,54 @@ function formatUpdatedAt(value: string) {
             {{ t('prompts.basicInfo') }}
           </h2>
         </div>
+        <dl class="space-y-3 text-sm">
+          <div>
+            <dt class="text-xs text-muted-foreground">{{ t('prompts.group') }}</dt>
+            <dd class="mt-0.5 font-medium">{{ template.groupName || '—' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-muted-foreground">{{ t('prompts.engine') }}</dt>
+            <dd class="mt-0.5 font-medium">{{ t(`prompts.engines.${template.engine}`) }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-muted-foreground">{{ t('prompts.version') }}</dt>
+            <dd class="mt-0.5 font-medium">
+              {{ template.version }}
+              <span class="font-normal text-muted-foreground">
+                · {{ t('prompts.revision', { revision: template.revision }) }}
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs text-muted-foreground">{{ t('prompts.descriptionLabel') }}</dt>
+            <dd class="mt-0.5">{{ template.description || t('prompts.noDescription') }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-muted-foreground">{{ t('prompts.tags') }}</dt>
+            <dd v-if="template.tags.length" class="mt-1.5 flex flex-wrap gap-1.5">
+              <span
+                v-for="tag in template.tags"
+                :key="tag"
+                class="ag-tag"
+                :style="{ '--ag-tag': template.color }"
+                >{{ tag }}</span
+              >
+            </dd>
+            <dd v-else class="mt-0.5 text-muted-foreground">—</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-muted-foreground">{{ t('prompts.color') }}</dt>
+            <dd class="mt-1.5 flex items-center gap-2">
+              <span class="size-5 rounded-full" :style="{ backgroundColor: template.color }" />
+              <span class="font-mono text-xs">{{ template.color }}</span>
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs text-muted-foreground">{{ t('prompts.updatedAt') }}</dt>
+            <dd class="mt-0.5">{{ formatUpdatedAt(template.updatedAt) }}</dd>
+          </div>
+        </dl>
+      </aside>
+    </div>
+  </section>
+</template>
