@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia';
 
+import { backendRequestHeaders } from '../api/locale';
+
 export interface AuthUser {
   subject: string;
   name: string;
@@ -15,8 +17,16 @@ export interface AuthSession {
 export interface UserProfile {
   username: string;
   displayName: string;
-  email?: string;
-  avatarUrl?: string;
+  email?: string | null;
+  avatarUrl?: string | null;
+  phoneNumber?: string | null;
+  description?: string | null;
+  occupation?: string | null;
+  organization?: string | null;
+  homepageUrl?: string | null;
+  location?: string | null;
+  timezone?: string | null;
+  preferredLanguage?: string | null;
 }
 
 const backendBaseUrl = (
@@ -25,12 +35,25 @@ const backendBaseUrl = (
 const authRequestTimeoutMs = 8_000;
 let sessionRequest: Promise<AuthSession> | null = null;
 
+async function readErrorMessage(response: Response): Promise<string> {
+  try {
+    const body = (await response.json()) as { message?: string };
+    return body.message?.trim() ?? '';
+  } catch {
+    return '';
+  }
+}
+
 async function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), authRequestTimeoutMs);
 
   try {
-    return await fetch(input, { ...init, signal: controller.signal });
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+      headers: backendRequestHeaders(init?.headers),
+    });
   } finally {
     window.clearTimeout(timeout);
   }
@@ -48,6 +71,8 @@ export const useAuthStore = defineStore('auth', {
   getters: {
     isAuthenticated: (state) => state.session?.authenticated === true,
     user: (state) => state.session?.user,
+    /** Prefer the AgentGo profile avatar; OIDC `picture` is often absent from Authentik. */
+    avatarUrl: (state) => state.profile?.avatarUrl ?? state.session?.user?.picture ?? null,
   },
 
   actions: {
@@ -59,7 +84,6 @@ export const useAuthStore = defineStore('auth', {
       this.error = null;
       sessionRequest = fetchWithTimeout(`${backendBaseUrl}/api/auth/session`, {
         credentials: 'include',
-        headers: { Accept: 'application/json' },
       })
         .then(async (response) => {
           if (response.status === 401) return { authenticated: false };
@@ -91,6 +115,12 @@ export const useAuthStore = defineStore('auth', {
         .then((nextSession) => {
           this.session = nextSession;
           this.initialized = true;
+          if (nextSession.authenticated) {
+            // Header avatar comes from profile, not the OIDC picture claim.
+            void this.loadProfile().catch(() => undefined);
+          } else {
+            this.profile = null;
+          }
           return nextSession;
         })
         .finally(() => {
@@ -119,14 +149,31 @@ export const useAuthStore = defineStore('auth', {
       sessionRequest = null;
     },
 
+    syncSessionIdentity(profile: UserProfile) {
+      if (!this.session?.user) return;
+      this.session.user.name = profile.displayName;
+      this.session.user.email = profile.email ?? undefined;
+      this.session.user.picture = profile.avatarUrl ?? undefined;
+    },
+
+    /** Updates the in-memory avatar after upload so the header matches Settings before save. */
+    setAvatarUrl(avatarUrl: string | null) {
+      if (this.profile) {
+        this.profile = { ...this.profile, avatarUrl };
+      }
+      if (this.session?.user) {
+        this.session.user.picture = avatarUrl ?? undefined;
+      }
+    },
+
     async loadProfile(): Promise<UserProfile> {
       const response = await fetchWithTimeout(`${backendBaseUrl}/api/auth/profile`, {
         credentials: 'include',
-        headers: { Accept: 'application/json' },
       });
-      if (!response.ok) throw new Error(`Profile request failed: ${response.status}`);
+      if (!response.ok) throw new Error(await readErrorMessage(response));
       const profile = (await response.json()) as UserProfile;
       this.profile = profile;
+      this.syncSessionIdentity(profile);
       return profile;
     },
 
@@ -134,17 +181,13 @@ export const useAuthStore = defineStore('auth', {
       const response = await fetchWithTimeout(`${backendBaseUrl}/api/auth/profile`, {
         method: 'PUT',
         credentials: 'include',
-        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profile),
       });
-      if (!response.ok) throw new Error(`Profile update failed: ${response.status}`);
+      if (!response.ok) throw new Error(await readErrorMessage(response));
       const nextProfile = (await response.json()) as UserProfile;
       this.profile = nextProfile;
-      if (this.session?.user) {
-        this.session.user.name = nextProfile.displayName;
-        this.session.user.email = nextProfile.email;
-        this.session.user.picture = nextProfile.avatarUrl;
-      }
+      this.syncSessionIdentity(nextProfile);
       return nextProfile;
     },
   },

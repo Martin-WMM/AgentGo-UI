@@ -1,211 +1,199 @@
 <script setup lang="ts">
+import { IconTooltipHost, ToastHost } from '@agentgo/ui';
 import { Icon } from '@iconify/vue';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
 
+import AppHeaderActions from './components/AppHeaderActions.vue';
+import AppSidebar from './components/AppSidebar.vue';
+import { useSidebar } from './composables/useSidebar';
 import { useTheme } from './composables/useTheme';
+import { useWorkspaces } from './composables/useWorkspaces';
+import {
+  consoleFooterNavItems,
+  consoleNavItems,
+  isResourcePath,
+  resourceCatalog,
+} from './navigation';
 import { useAuthStore } from './stores/auth';
 
-const { locale, t } = useI18n();
-const { theme, toggleTheme } = useTheme();
+const { t } = useI18n();
+const { theme } = useTheme();
+const { openMobile } = useSidebar();
+const { getWorkspace } = useWorkspaces();
 const auth = useAuthStore();
 const route = useRoute();
-const userMenuOpen = ref(false);
-const userMenuRoot = ref<HTMLElement | null>(null);
 const isDark = computed(() => theme.value === 'dark');
-const userName = computed(() => auth.user?.name || auth.user?.email || '');
-const userInitials = computed(() => {
-  const initials = userName.value
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-  return initials || '?';
-});
+const isAuthGate = computed(() => route.name === 'signed-out' || route.name === 'auth-error');
+const showAppShell = computed(() => auth.isAuthenticated && !isAuthGate.value);
 const logoSource = computed(() =>
   isDark.value ? '/assets/logo-dark.png' : '/assets/logo-light.png',
 );
-
-function setLocale(nextLocale: 'en' | 'zh-CN') {
-  locale.value = nextLocale;
-  localStorage.setItem('agentgo-locale', nextLocale);
-}
-
-function toggleLocale() {
-  setLocale(locale.value === 'en' ? 'zh-CN' : 'en');
-}
-
-function closeUserMenu() {
-  userMenuOpen.value = false;
-}
-
-function onDocumentPointerDown(event: PointerEvent) {
-  if (!userMenuOpen.value) return;
-  const target = event.target;
-  if (target instanceof Node && userMenuRoot.value?.contains(target)) return;
-  closeUserMenu();
-}
-
-function onDocumentKeyDown(event: KeyboardEvent) {
-  if (event.key === 'Escape') closeUserMenu();
-}
-
-onMounted(() => {
-  document.addEventListener('pointerdown', onDocumentPointerDown);
-  document.addEventListener('keydown', onDocumentKeyDown);
-});
-
-onBeforeUnmount(() => {
-  document.removeEventListener('pointerdown', onDocumentPointerDown);
-  document.removeEventListener('keydown', onDocumentKeyDown);
+const breadcrumbs = computed(() => {
+  if (!route.path.startsWith('/console')) return [];
+  const items = [{ label: t('console.title'), to: undefined as string | undefined }];
+  const resource = resourceCatalog.find(
+    (item) => route.path === item.to || route.path.startsWith(`${item.to}/`),
+  );
+  if (resource || isResourcePath(route.path)) {
+    items.push({ label: t('console.items.resources'), to: '/console/resources' });
+    if (resource) items.push({ label: t(`console.items.${resource.key}`), to: resource.to });
+  } else {
+    const navItem = [...consoleNavItems, ...consoleFooterNavItems].find(
+      (item) => route.path === item.to || route.path.startsWith(`${item.to}/`),
+    );
+    if (!navItem) return [];
+    items.push({ label: t(`console.items.${navItem.key}`), to: navItem.to });
+  }
+  if (route.name === 'workspace-files') {
+    const workspace = getWorkspace(String(route.params.workspaceId));
+    items.push({ label: workspace?.name || t('files.notFound'), to: undefined });
+  }
+  if (route.name === 'workspace-create') {
+    items.push({ label: t('files.createWorkspace'), to: undefined });
+  }
+  if (route.name === 'workspace-edit') {
+    items.push({ label: t('files.editWorkspace'), to: undefined });
+  }
+  if (route.name === 'model-create') {
+    items.push({ label: t('models.createModel'), to: undefined });
+  }
+  if (route.name === 'model-edit') {
+    items.push({ label: t('models.editModel'), to: undefined });
+  }
+  if (route.name === 'mcp-server-create') {
+    items.push({ label: t('mcp.createServer'), to: undefined });
+  }
+  if (route.name === 'mcp-server-edit') {
+    items.push({ label: t('mcp.editServer'), to: undefined });
+  }
+  if (route.name === 'a2a-agent-create') {
+    items.push({ label: t('a2a.createAgent'), to: undefined });
+  }
+  if (route.name === 'a2a-agent-edit') {
+    items.push({ label: t('a2a.editAgent'), to: undefined });
+  }
+  if (route.name === 'prompt-template-create') {
+    items.push({ label: t('prompts.createTemplate'), to: undefined });
+  }
+  if (route.name === 'prompt-template-history') {
+    items.push({ label: t('prompts.history'), to: undefined });
+  }
+  if (route.name === 'prompt-template-edit') {
+    items.push({ label: t('prompts.editTemplate'), to: undefined });
+  }
+  if (route.name === 'prompt-template-view') {
+    items.push({ label: t('prompts.viewTemplate'), to: undefined });
+  }
+  return items;
 });
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col bg-background text-foreground">
-    <header class="sticky top-0 z-30 border-b border-input/70 bg-background/90 backdrop-blur">
-      <div class="mx-auto flex h-16 w-full max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
-        <RouterLink to="/" class="flex min-w-0 items-center gap-3" :aria-label="t('brand')">
-          <span
-            class="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-accent"
-          >
-            <img :src="logoSource" alt="" class="size-16 max-w-none object-cover" />
-          </span>
-          <span class="hidden min-w-0 sm:block">
-            <span class="block truncate text-sm font-semibold tracking-tight">{{
-              t('brand')
-            }}</span>
-            <span class="block truncate text-xs text-muted-foreground">{{
-              t('brandTagline')
-            }}</span>
-          </span>
-        </RouterLink>
-
-        <nav class="hidden items-center gap-1 md:flex" :aria-label="t('navigation.label')">
-          <RouterLink
-            to="/"
-            class="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
-            :class="
-              route.path === '/' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'
-            "
-          >
-            {{ t('navigation.home') }}
-          </RouterLink>
-          <RouterLink
-            to="/chat"
-            class="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
-            :class="
-              route.path === '/chat' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'
-            "
-          >
-            {{ t('navigation.chat') }}
-          </RouterLink>
-        </nav>
-
-        <div class="ml-auto flex items-center gap-1">
-          <div ref="userMenuRoot" class="relative">
-            <button
-              class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent"
-              type="button"
-              :aria-expanded="userMenuOpen"
-              :aria-label="t('user.menu')"
-              @click="userMenuOpen = !userMenuOpen"
-            >
-              <span
-                class="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-xs font-bold text-white"
-              >
-                <img
-                  v-if="auth.user?.picture"
-                  :src="auth.user.picture"
-                  :alt="userName"
-                  class="size-full object-cover"
-                />
-                <span v-else>{{ userInitials }}</span>
-              </span>
-              <span class="hidden max-w-32 truncate text-sm font-medium lg:block">{{
-                userName
-              }}</span>
-              <Icon icon="lucide:chevron-down" width="15" height="15" aria-hidden="true" />
-            </button>
-            <div
-              v-if="userMenuOpen"
-              class="absolute right-0 top-12 w-48 rounded-xl border border-input bg-background p-2 shadow-xl"
-            >
-              <p class="px-3 py-2 text-xs text-muted-foreground">{{ t('user.signedInAs') }}</p>
-              <p class="truncate px-3 pb-1 text-sm font-medium">{{ userName }}</p>
-              <p class="truncate px-3 pb-2 text-xs text-muted-foreground">{{ auth.user?.email }}</p>
-              <RouterLink
-                to="/settings"
-                class="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
-                @click="userMenuOpen = false"
-              >
-                <Icon icon="lucide:settings-2" width="16" height="16" aria-hidden="true" />
-                {{ t('navigation.settings') }}
-              </RouterLink>
-              <button
-                type="button"
-                class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
-                @click="auth.logout"
-              >
-                <Icon icon="lucide:log-out" width="16" height="16" aria-hidden="true" />
-                {{ t('user.logout') }}
-              </button>
-            </div>
-          </div>
+  <div class="flex min-h-dvh w-full min-w-0 max-w-full text-foreground">
+    <AppSidebar v-if="showAppShell" />
+    <div class="flex w-full min-w-0 max-w-full flex-1 flex-col">
+      <header
+        class="sticky top-0 z-30 w-full min-w-0 border-b border-input/60 bg-background/75 shadow-[0_10px_30px_-24px] shadow-foreground/40 backdrop-blur-xl dark:border-info/20 dark:bg-background/80 dark:shadow-black/70"
+      >
+        <div class="flex h-16 w-full min-w-0 items-center gap-3 px-4 sm:px-6">
           <button
-            class="rounded-lg px-2.5 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            v-if="showAppShell"
             type="button"
-            :aria-label="t('language.label')"
-            @click="toggleLocale"
+            class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden"
+            :aria-label="t('console.open')"
+            @click="openMobile"
           >
-            {{ locale === 'en' ? '中' : 'EN' }}
+            <Icon icon="lucide:panel-left" width="18" height="18" aria-hidden="true" />
           </button>
-          <button
-            class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-            type="button"
-            :aria-label="isDark ? t('theme.light') : t('theme.dark')"
-            @click="toggleTheme"
+          <RouterLink to="/" class="flex min-w-0 items-center gap-3" :aria-label="t('brand')">
+            <span
+              class="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-accent"
+            >
+              <img :src="logoSource" alt="" class="size-16 max-w-none object-cover" />
+            </span>
+            <span class="hidden min-w-0 sm:block">
+              <span class="block truncate text-sm font-semibold tracking-tight">{{
+                t('brand')
+              }}</span>
+              <span class="block truncate text-xs text-muted-foreground">{{
+                t('brandTagline')
+              }}</span>
+            </span>
+          </RouterLink>
+          <AppHeaderActions />
+        </div>
+      </header>
+      <nav
+        v-if="showAppShell && breadcrumbs.length"
+        class="flex h-14 w-full min-w-0 items-center border-b border-input/60 bg-background/55 px-4 backdrop-blur sm:px-6"
+        :aria-label="t('console.label')"
+      >
+        <ol class="flex min-w-0 items-center gap-2 text-sm">
+          <li
+            v-for="(crumb, index) in breadcrumbs"
+            :key="`${crumb.label}-${index}`"
+            class="flex min-w-0 items-center gap-2"
           >
             <Icon
-              :icon="isDark ? 'lucide:sun' : 'lucide:moon'"
-              width="18"
-              height="18"
+              v-if="index"
+              icon="lucide:chevron-right"
+              class="shrink-0 text-muted-foreground/70"
+              width="15"
+              height="15"
               aria-hidden="true"
             />
-          </button>
-          <RouterLink
-            to="/settings"
-            class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-            :aria-label="t('navigation.settings')"
-          >
-            <Icon icon="lucide:sliders-horizontal" width="18" height="18" aria-hidden="true" />
-          </RouterLink>
+            <RouterLink
+              v-if="crumb.to && index < breadcrumbs.length - 1"
+              :to="crumb.to"
+              class="truncate text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {{ crumb.label }}
+            </RouterLink>
+            <span
+              v-else
+              class="truncate"
+              :class="
+                index === breadcrumbs.length - 1
+                  ? 'font-medium text-foreground'
+                  : 'text-muted-foreground'
+              "
+              :aria-current="index === breadcrumbs.length - 1 ? 'page' : undefined"
+              >{{ crumb.label }}</span
+            >
+          </li>
+        </ol>
+      </nav>
+      <main class="w-full min-w-0 max-w-full flex-1">
+        <RouterView v-slot="{ Component, route: current }">
+          <Transition name="ag-page" mode="out-in">
+            <component :is="Component" :key="current.path" />
+          </Transition>
+        </RouterView>
+      </main>
+      <footer class="border-t border-input/60 bg-background/70 backdrop-blur">
+        <div
+          class="flex w-full min-w-0 flex-col gap-2 px-4 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6"
+        >
+          <p>© {{ new Date().getFullYear() }} AgentGo. {{ t('footer.rights') }}</p>
+          <div class="flex gap-4">
+            <a href="#" class="transition-colors hover:text-foreground">{{
+              t('footer.privacy')
+            }}</a>
+            <a href="#" class="transition-colors hover:text-foreground">{{ t('footer.terms') }}</a>
+            <a
+              href="https://github.com/Martin-WMM/AgentGo-backend"
+              target="_blank"
+              rel="noreferrer"
+              class="transition-colors hover:text-foreground"
+              >{{ t('footer.backend') }}</a
+            >
+          </div>
         </div>
-      </div>
-    </header>
-
-    <main class="flex-1"><RouterView /></main>
-
-    <footer class="border-t border-input/70 bg-background">
-      <div
-        class="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8"
-      >
-        <p>© {{ new Date().getFullYear() }} AgentGo. {{ t('footer.rights') }}</p>
-        <div class="flex gap-4">
-          <a href="#" class="transition-colors hover:text-foreground">{{ t('footer.privacy') }}</a>
-          <a href="#" class="transition-colors hover:text-foreground">{{ t('footer.terms') }}</a>
-          <a
-            href="https://github.com/Martin-WMM/AgentGo-backend"
-            target="_blank"
-            rel="noreferrer"
-            class="transition-colors hover:text-foreground"
-            >{{ t('footer.backend') }}</a
-          >
-        </div>
-      </div>
-    </footer>
+      </footer>
+    </div>
+    <ToastHost :dismiss-label="t('toast.dismiss')" :region-label="t('toast.region')" />
+    <IconTooltipHost />
   </div>
 </template>

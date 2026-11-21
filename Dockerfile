@@ -4,6 +4,9 @@ WORKDIR /workspace
 
 ARG VITE_AGENTGO_BACKEND_URL
 ENV VITE_AGENTGO_BACKEND_URL=$VITE_AGENTGO_BACKEND_URL
+# TEST gateway mounts this image at /ui/; local defaults stay '/'.
+ARG VITE_BASE=/
+ENV VITE_BASE=$VITE_BASE
 
 RUN corepack enable
 

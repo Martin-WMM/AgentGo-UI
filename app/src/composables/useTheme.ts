@@ -1,32 +1,63 @@
 import { ref } from 'vue';
 
-export type Theme = 'light' | 'dark';
+export type ThemePreference = 'light' | 'dark' | 'system';
+export type ResolvedTheme = 'light' | 'dark';
 
-const theme = ref<Theme>('light');
+const STORAGE_KEY = 'agentgo-theme';
+
+const preference = ref<ThemePreference>('system');
+const theme = ref<ResolvedTheme>('light');
 let initialized = false;
+let media: MediaQueryList | null = null;
 
-function getInitialTheme(): Theme {
-  const storedTheme = localStorage.getItem('agentgo-theme');
-  if (storedTheme === 'dark' || storedTheme === 'light') return storedTheme;
+function readStoredPreference(): ThemePreference {
+  const storedTheme = localStorage.getItem(STORAGE_KEY);
+  if (storedTheme === 'dark' || storedTheme === 'light' || storedTheme === 'system')
+    return storedTheme;
+  return 'system';
+}
+
+function systemTheme(): ResolvedTheme {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-function applyTheme(nextTheme: Theme) {
-  theme.value = nextTheme;
-  document.documentElement.classList.toggle('dark', nextTheme === 'dark');
-  document.documentElement.style.colorScheme = nextTheme;
-  localStorage.setItem('agentgo-theme', nextTheme);
+function resolveTheme(nextPreference: ThemePreference): ResolvedTheme {
+  return nextPreference === 'system' ? systemTheme() : nextPreference;
+}
+
+function paint(nextPreference: ThemePreference) {
+  preference.value = nextPreference;
+  const resolved = resolveTheme(nextPreference);
+  theme.value = resolved;
+  document.documentElement.classList.toggle('dark', resolved === 'dark');
+  document.documentElement.style.colorScheme = resolved;
+  localStorage.setItem(STORAGE_KEY, nextPreference);
+}
+
+function onSystemThemeChange() {
+  if (preference.value === 'system') paint('system');
+}
+
+function ensureTheme() {
+  if (initialized || typeof document === 'undefined') return;
+  initialized = true;
+  media = window.matchMedia('(prefers-color-scheme: dark)');
+  media.addEventListener('change', onSystemThemeChange);
+  paint(readStoredPreference());
+}
+
+/** Applies a theme preference immediately and caches it for the next page load. */
+export function applyThemePreference(nextPreference: ThemePreference) {
+  ensureTheme();
+  paint(nextPreference);
 }
 
 export function useTheme() {
-  if (!initialized) {
-    applyTheme(getInitialTheme());
-    initialized = true;
-  }
+  ensureTheme();
 
   function toggleTheme() {
-    applyTheme(theme.value === 'dark' ? 'light' : 'dark');
+    paint(theme.value === 'dark' ? 'light' : 'dark');
   }
 
-  return { theme, toggleTheme };
+  return { theme, preference, applyThemePreference, toggleTheme };
 }
