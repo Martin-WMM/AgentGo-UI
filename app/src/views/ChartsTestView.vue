@@ -1198,3 +1198,11 @@ function download(blob: Blob, name: string) {
                     type="number"
                     class="w-20 rounded border border-input bg-card px-2 py-1"
                   />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div></div
+    ></Transition>
+  </section>
+</template>
