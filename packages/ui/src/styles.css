@@ -148,3 +148,153 @@ body::before {
 }
 
 .dark body::before {
+  opacity: 0.022;
+  mix-blend-mode: soft-light;
+}
+
+html[data-density='compact'] {
+  font-size: 14px;
+}
+
+html.reduce-motion,
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+:where(button, a, input, textarea, select, [role='tab']) {
+  transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:where(button, a).rounded-lg.p-2:hover {
+  transform: translateY(-1px);
+}
+
+.ag-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 0.85rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  cursor: pointer;
+  box-shadow: 0 10px 22px -16px color-mix(in oklab, var(--foreground) 55%, transparent);
+}
+
+.ag-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.ag-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+.ag-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+.ag-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.ag-btn-sm {
+  border-radius: 0.7rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.ag-btn-lg {
+  padding: 0.75rem 1.25rem;
+}
+
+.ag-btn-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border-radius: 0.75rem;
+}
+
+.ag-icon-tip {
+  position: fixed;
+  z-index: 80;
+  pointer-events: none;
+  width: max-content;
+  max-width: min(16rem, calc(100vw - 1rem));
+  padding: 0.3rem 0.55rem;
+  border-radius: 0.5rem;
+  background: var(--foreground);
+  color: var(--background);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  overflow-wrap: anywhere;
+  box-shadow: 0 10px 24px -12px color-mix(in oklab, var(--foreground) 70%, transparent);
+  opacity: 0;
+}
+
+.ag-icon-tip--open {
+  opacity: 1;
+  transition: opacity 120ms ease;
+}
+
+.ag-btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 12px 24px -14px color-mix(in oklab, var(--primary) 75%, transparent);
+}
+
+.ag-btn-primary:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--primary) 88%, white);
+}
+
+.ag-btn-info {
+  background: var(--info);
+  color: var(--info-foreground);
+  box-shadow: 0 12px 24px -14px color-mix(in oklab, var(--info) 70%, transparent);
+}
+
+.ag-btn-info:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--info) 86%, white);
+}
+
+.ag-btn-success {
+  background: var(--success);
+  color: var(--success-foreground);
+  box-shadow: 0 12px 24px -14px color-mix(in oklab, var(--success) 70%, transparent);
+}
+
+.ag-btn-success:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--success) 86%, white);
+}
+
+.ag-btn-warning {
+  background: var(--warning);
+  color: var(--warning-foreground);
+  box-shadow: 0 12px 24px -14px color-mix(in oklab, var(--warning) 70%, transparent);
+}
+
+.ag-btn-warning:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--warning) 88%, white);
+}
+
+.ag-btn-danger {
+  background: var(--destructive);
+  color: var(--destructive-foreground);
+  box-shadow: 0 12px 24px -14px color-mix(in oklab, var(--destructive) 70%, transparent);
+}
+
+.ag-btn-danger:hover:not(:disabled) {
