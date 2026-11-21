@@ -1,36 +1,18 @@
 <script setup lang="ts">
-import { cva, type VariantProps } from 'class-variance-authority';
-import { computed, type ButtonHTMLAttributes } from 'vue';
+import { computed, useAttrs, type ButtonHTMLAttributes } from 'vue';
 
 import { cn } from '../lib/utils';
 
-const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
-  {
-    variants: {
-      variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-      },
-      size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-9 rounded-md px-3',
-        lg: 'h-11 rounded-md px-8',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-      size: 'default',
-    },
-  },
-);
+defineOptions({ inheritAttrs: false });
 
-type ButtonVariantProps = VariantProps<typeof buttonVariants>;
+type ButtonVariant =
+  'default' | 'info' | 'success' | 'warning' | 'destructive' | 'secondary' | 'outline' | 'ghost';
+
+type ButtonSize = 'default' | 'sm' | 'lg' | 'icon';
 
 interface Props extends /* @vue-ignore */ ButtonHTMLAttributes {
-  variant?: ButtonVariantProps['variant'];
-  size?: ButtonVariantProps['size'];
+  variant?: ButtonVariant;
+  size?: ButtonSize;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -38,11 +20,39 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'default',
 });
 
-const classes = computed(() => cn(buttonVariants({ variant: props.variant, size: props.size })));
+const attrs = useAttrs();
+
+const variantClass: Record<ButtonVariant, string> = {
+  default: 'ag-btn-primary',
+  info: 'ag-btn-info',
+  success: 'ag-btn-success',
+  warning: 'ag-btn-warning',
+  destructive: 'ag-btn-danger',
+  secondary: 'ag-btn-secondary',
+  outline: 'ag-btn-outline',
+  ghost: 'ag-btn-ghost',
+};
+
+const sizeClass: Record<ButtonSize, string> = {
+  default: '',
+  sm: 'ag-btn-sm',
+  lg: 'ag-btn-lg',
+  icon: 'ag-btn-icon',
+};
+
+const classes = computed(() =>
+  cn('ag-btn', variantClass[props.variant], sizeClass[props.size], attrs.class as string),
+);
+
+const rest = computed(() => {
+  const other = { ...attrs };
+  delete other.class;
+  return other;
+});
 </script>
 
 <template>
-  <button :class="classes" type="button" v-bind="$attrs">
+  <button :class="classes" type="button" v-bind="rest">
     <slot />
   </button>
 </template>

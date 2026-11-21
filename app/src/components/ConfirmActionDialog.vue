@@ -42,18 +42,10 @@ const dialogOpen = computed({
       {{ t('files.deleteWarning') }}
     </p>
     <div class="mt-6 flex justify-end gap-3">
-      <button
-        type="button"
-        class="rounded-lg px-4 py-2 text-sm hover:bg-accent"
-        @click="dialogOpen = false"
-      >
+      <button type="button" class="ag-btn ag-btn-ghost" @click="dialogOpen = false">
         {{ t('files.cancel') }}
       </button>
-      <button
-        type="button"
-        class="inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"
-        @click="emit('confirm')"
-      >
+      <button type="button" class="ag-btn ag-btn-danger" @click="emit('confirm')">
         <Icon icon="lucide:trash-2" width="16" height="16" aria-hidden="true" />{{ confirmLabel }}
       </button>
     </div>

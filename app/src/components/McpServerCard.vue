@@ -6,17 +6,22 @@ import { useI18n } from 'vue-i18n';
 import type { ManagedMcpServer } from '../composables/useMcpServers';
 import { mcpPresentation } from '../lib/mcpPresentation';
 
-const props = defineProps<{
-  server: ManagedMcpServer;
-  index: number;
-  deleting: boolean;
-  probing: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    server: ManagedMcpServer;
+    index: number;
+    deleting: boolean;
+    probing: boolean;
+    selected?: boolean;
+  }>(),
+  { selected: false },
+);
 
 const emit = defineEmits<{
   edit: [];
   remove: [];
   probe: [];
+  toggle: [];
 }>();
 
 const { t } = useI18n();
@@ -33,7 +38,8 @@ const remoteLabel = computed(() => {
 
 <template>
   <article
-    class="group relative flex min-h-56 flex-col overflow-hidden rounded-2xl border bg-background p-5 shadow-sm"
+    class="ag-card ag-rise group relative flex min-h-56 flex-col overflow-hidden rounded-2xl border p-5"
+    :class="selected ? 'ring-2 ring-primary' : ''"
     :style="{
       animationDelay: `${index * 75}ms`,
       borderColor: `color-mix(in srgb, ${style.color} 55%, transparent)`,
@@ -61,10 +67,20 @@ const remoteLabel = computed(() => {
         </div>
         <div class="min-w-0">
           <h2 class="truncate text-lg font-semibold">{{ server.name }}</h2>
-          <p class="truncate text-sm text-muted-foreground">{{ remoteLabel }}</p>
+          <p class="truncate text-sm text-muted-foreground">
+            {{ server.groupName }} · {{ remoteLabel }}
+          </p>
         </div>
       </div>
       <div class="pointer-events-auto flex items-center gap-1">
+        <input
+          type="checkbox"
+          class="size-4 rounded border-input accent-primary"
+          :checked="selected"
+          :aria-label="t('selection.select', { name: server.name })"
+          @click.stop
+          @change="emit('toggle')"
+        />
         <button
           type="button"
           class="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"

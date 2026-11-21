@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue';
 
+import { batchDeleteIds, batchDeletePaths } from '../api/batchDelete';
 import { apiData, apiRequest } from '../api/fileRequest';
 import { backendRequestHeaders } from '../api/locale';
 import { normalizeWorkspaceColor } from '../lib/workspaceColors';
@@ -7,6 +8,7 @@ import { backendBaseUrl } from '../stores/auth';
 
 export interface Workspace {
   id: string;
+  groupName: string;
   name: string;
   description: string;
   color: string;
@@ -31,7 +33,8 @@ interface ListedFile {
 }
 
 interface WorkspaceDto {
-  id: string;
+  id: string | number;
+  groupName?: string | null;
   name: string;
   description?: string | null;
   metadata?: { color?: string | null } | null;
@@ -41,11 +44,13 @@ interface WorkspaceDto {
 
 const workspaces = ref<Workspace[]>([]);
 const loaded = ref(false);
+const ready = ref(false);
 let loading: Promise<void> | null = null;
 
 function toWorkspace(dto: WorkspaceDto): Workspace {
   return {
-    id: dto.id,
+    id: String(dto.id),
+    groupName: dto.groupName?.trim() || 'default',
     name: dto.name,
     description: dto.description?.trim() ?? '',
     color: normalizeWorkspaceColor(dto.metadata?.color),
@@ -69,12 +74,19 @@ export function useWorkspaces() {
   );
 
   async function ensureLoaded() {
-    if (loaded.value) return;
+    if (loaded.value) {
+      ready.value = true;
+      return;
+    }
     if (!loading) {
       loading = (async () => {
-        const data = await apiData<WorkspaceDto[]>('/api/v1/workspaces');
-        workspaces.value = data.map(toWorkspace);
-        loaded.value = true;
+        try {
+          const data = await apiData<WorkspaceDto[]>('/api/v1/workspaces');
+          workspaces.value = data.map(toWorkspace);
+          loaded.value = true;
+        } finally {
+          ready.value = true;
+        }
       })().finally(() => {
         loading = null;
       });
@@ -88,11 +100,17 @@ export function useWorkspaces() {
     loaded.value = true;
   }
 
-  async function createWorkspace(name: string, description: string, color: string) {
+  async function createWorkspace(
+    name: string,
+    description: string,
+    color: string,
+    groupName = 'default',
+  ) {
     const created = await apiData<WorkspaceDto>('/api/v1/workspaces', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        groupName: groupName.trim() || 'default',
         name: name.trim(),
         description: description.trim() || null,
         metadata: { color: normalizeWorkspaceColor(color) },
@@ -104,11 +122,18 @@ export function useWorkspaces() {
     return workspace;
   }
 
-  async function updateWorkspace(id: string, name: string, description: string, color: string) {
+  async function updateWorkspace(
+    id: string,
+    name: string,
+    description: string,
+    color: string,
+    groupName = 'default',
+  ) {
     const updated = await apiData<WorkspaceDto>(`/api/v1/workspaces/${encodeURIComponent(id)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        groupName: groupName.trim() || 'default',
         name: name.trim(),
         description: description.trim() || null,
         metadata: { color: normalizeWorkspaceColor(color) },
@@ -123,8 +148,24 @@ export function useWorkspaces() {
     workspaces.value = workspaces.value.filter((item) => item.id !== id);
   }
 
+  async function removeWorkspaces(ids: string[]) {
+    await batchDeleteIds('/api/v1/workspaces/batch-delete', ids);
+    const removed = new Set(ids);
+    workspaces.value = workspaces.value.filter((item) => !removed.has(item.id));
+  }
+
   function getWorkspace(id: string) {
     return workspaces.value.find((item) => item.id === id);
+  }
+
+  async function loadWorkspace(id: string) {
+    const cached = getWorkspace(id);
+    if (cached) return cached;
+    const data = await apiData<WorkspaceDto>(`/api/v1/workspaces/${encodeURIComponent(id)}`);
+    const workspace = toWorkspace(data);
+    workspaces.value = [workspace, ...workspaces.value.filter((item) => item.id !== workspace.id)];
+    loaded.value = true;
+    return workspace;
   }
 
   async function listFiles(workspaceId: string): Promise<WorkspaceFile[]> {
@@ -152,6 +193,10 @@ export function useWorkspaces() {
     await apiRequest(`/api/v1/files/workspace?path=${encodeURIComponent(path)}`, {
       method: 'DELETE',
     });
+  }
+
+  async function deleteFiles(paths: string[]) {
+    await batchDeletePaths(paths);
   }
 
   async function downloadFile(path: string) {
@@ -184,15 +229,19 @@ export function useWorkspaces() {
 
   return {
     workspaces: sortedWorkspaces,
+    workspacesReady: ready,
     ensureLoaded,
     refreshWorkspaces,
     createWorkspace,
     updateWorkspace,
     removeWorkspace,
+    removeWorkspaces,
     getWorkspace,
+    loadWorkspace,
     listFiles,
     uploadFile,
     deleteFile,
+    deleteFiles,
     downloadFile,
   };
 }

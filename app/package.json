@@ -12,21 +12,20 @@
   "dependencies": {
     "@agentgo/ui": "workspace:*",
     "@iconify/vue": "^4.3.0",
-    "highlight.js": "^11.12.0",
-    "marked": "^18.1.0",
+    "highlight.js": "^11.11.1",
+    "marked": "^15.0.12",
     "pinia": "^4.0.3",
-    "vue": "^3.5.13",
-    "vue-i18n": "11.1.12",
+    "vue": "^3.5.46",
+    "vue-i18n": "11.4.23",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
-    "@intlify/devtools-types": "11.1.12",
+    "@intlify/devtools-types": "11.4.23",
     "@tailwindcss/vite": "^4.0.12",
-    "@types/highlight.js": "^10.1.0",
     "@vitejs/plugin-vue": "^5.2.3",
     "jsdom": "^26.0.0",
     "tailwindcss": "^4.0.12",
-    "vite": "^6.2.2",
+    "vite": "^6.4.6",
     "vitest": "^4.1.11"
   }
 }

@@ -52,7 +52,7 @@ function onReduceMotion(event: Event) {
       </div>
     </div>
 
-    <div class="grid gap-5 sm:grid-cols-2">
+    <div class="ag-field-grid">
       <div class="space-y-2">
         <label for="system-theme" class="text-sm font-medium">{{ t('system.theme') }}</label>
         <select
@@ -78,7 +78,7 @@ function onReduceMotion(event: Event) {
           <option value="zh-CN">简体中文</option>
         </select>
       </div>
-      <div class="space-y-2 sm:col-span-2">
+      <div class="space-y-2">
         <label for="system-density" class="text-sm font-medium">{{ t('system.density') }}</label>
         <select
           id="system-density"

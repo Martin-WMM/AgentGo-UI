@@ -51,8 +51,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown));
   justify-content: center;
   box-sizing: border-box;
   padding: 1.5rem;
-  background: rgb(0 0 0 / 0.58);
-  backdrop-filter: blur(5px);
+  background: color-mix(in oklab, var(--foreground) 32%, transparent);
+  backdrop-filter: blur(6px);
 }
 .dialog-content {
   box-sizing: border-box;
@@ -63,10 +63,10 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown));
   border-radius: 1rem;
   padding: 1.5rem;
   color: var(--foreground);
-  background: var(--background);
+  background: var(--card);
   box-shadow:
-    0 24px 60px rgb(0 0 0 / 0.36),
-    0 0 0 1px rgb(255 255 255 / 0.03) inset;
+    0 24px 60px -20px color-mix(in oklab, var(--foreground) 45%, transparent),
+    0 0 0 1px color-mix(in oklab, white 8%, transparent) inset;
 }
 .dialog-backdrop-enter-active,
 .dialog-backdrop-leave-active {
@@ -89,7 +89,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown));
 .dialog-panel-enter-from,
 .dialog-panel-leave-to {
   opacity: 0;
-  transform: translateY(12px) scale(0.97);
+  transform: translateY(16px) scale(0.96);
 }
 @media (prefers-reduced-motion: reduce) {
   .dialog-backdrop-enter-active,

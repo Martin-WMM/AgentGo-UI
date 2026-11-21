@@ -6,15 +6,20 @@ import { useI18n } from 'vue-i18n';
 import { configuredModelName, type ManagedModel } from '../composables/useModels';
 import { modelPresentation } from '../lib/modelPresentation';
 
-const props = defineProps<{
-  model: ManagedModel;
-  index: number;
-  deleting: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    model: ManagedModel;
+    index: number;
+    deleting: boolean;
+    selected?: boolean;
+  }>(),
+  { selected: false },
+);
 
 const emit = defineEmits<{
   edit: [];
   remove: [];
+  toggle: [];
 }>();
 
 const { t } = useI18n();
@@ -25,7 +30,8 @@ const updatedAt = computed(() => new Date(props.model.updatedAt).toLocaleString(
 
 <template>
   <article
-    class="group relative flex min-h-56 flex-col overflow-hidden rounded-2xl border bg-background p-5 shadow-sm"
+    class="ag-card ag-rise group relative flex min-h-56 flex-col overflow-hidden rounded-2xl border p-5"
+    :class="selected ? 'ring-2 ring-primary' : ''"
     :style="{
       animationDelay: `${index * 75}ms`,
       borderColor: `color-mix(in srgb, ${style.color} 55%, transparent)`,
@@ -53,10 +59,20 @@ const updatedAt = computed(() => new Date(props.model.updatedAt).toLocaleString(
         </div>
         <div class="min-w-0">
           <h2 class="truncate text-lg font-semibold">{{ model.name }}</h2>
-          <p class="truncate text-sm text-muted-foreground">{{ model.provider }}</p>
+          <p class="truncate text-sm text-muted-foreground">
+            {{ model.groupName }} · {{ model.provider }}
+          </p>
         </div>
       </div>
       <div class="pointer-events-auto flex items-center gap-1">
+        <input
+          type="checkbox"
+          class="size-4 rounded border-input accent-primary"
+          :checked="selected"
+          :aria-label="t('selection.select', { name: model.name })"
+          @click.stop
+          @change="emit('toggle')"
+        />
         <button
           type="button"
           class="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"

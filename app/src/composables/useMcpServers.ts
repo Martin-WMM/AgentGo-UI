@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue';
 
+import { batchDeleteIds } from '../api/batchDelete';
 import { FileRequestError, apiData, apiRequest } from '../api/fileRequest';
 
 /** Connectivity statuses returned by `/api/v1/mcpServers`. */
@@ -21,6 +22,7 @@ export interface McpToolSummary {
 /** User-owned MCP Streamable HTTP server returned by the API. */
 export interface ManagedMcpServer {
   id: string;
+  groupName: string;
   name: string;
   transport: 'STREAMABLE_HTTP';
   endpointUrl: string;
@@ -44,6 +46,7 @@ export interface ManagedMcpServer {
 
 /** Fields sent when creating or replacing an MCP server. */
 export interface McpServerInput {
+  groupName: string;
   name: string;
   endpointUrl: string;
   authType: McpAuthType;
@@ -56,7 +59,8 @@ export interface McpServerInput {
 }
 
 interface McpServerDto {
-  id: string;
+  id: string | number;
+  groupName?: string | null;
   name: string;
   transport: 'STREAMABLE_HTTP';
   endpointUrl: string;
@@ -82,7 +86,8 @@ const servers = ref<ManagedMcpServer[]>([]);
 
 function toServer(dto: McpServerDto): ManagedMcpServer {
   return {
-    id: dto.id,
+    id: String(dto.id),
+    groupName: dto.groupName?.trim() || 'default',
     name: dto.name,
     transport: 'STREAMABLE_HTTP',
     endpointUrl: dto.endpointUrl,
@@ -112,6 +117,7 @@ function toServer(dto: McpServerDto): ManagedMcpServer {
 
 function requestBody(input: McpServerInput) {
   return {
+    groupName: input.groupName.trim() || 'default',
     name: input.name.trim(),
     transport: 'STREAMABLE_HTTP',
     endpointUrl: input.endpointUrl.trim(),
@@ -163,6 +169,15 @@ export function useMcpServers() {
     servers.value = data.map(toServer);
   }
 
+  async function getServer(id: string) {
+    const cached = servers.value.find((item) => item.id === id);
+    if (cached) return cached;
+    const data = await apiData<McpServerDto>(`/api/v1/mcpServers/${encodeURIComponent(id)}`);
+    const server = toServer(data);
+    servers.value = [server, ...servers.value.filter((item) => item.id !== server.id)];
+    return server;
+  }
+
   async function createServer(input: McpServerInput) {
     const created = await apiData<McpServerDto>('/api/v1/mcpServers', {
       method: 'POST',
@@ -190,6 +205,12 @@ export function useMcpServers() {
     servers.value = servers.value.filter((item) => item.id !== id);
   }
 
+  async function removeServers(ids: string[]) {
+    await batchDeleteIds('/api/v1/mcpServers/batch-delete', ids);
+    const removed = new Set(ids);
+    servers.value = servers.value.filter((item) => !removed.has(item.id));
+  }
+
   async function probeServer(id: string) {
     const probed = await apiData<McpServerDto>(
       `/api/v1/mcpServers/${encodeURIComponent(id)}/probe`,
@@ -203,9 +224,11 @@ export function useMcpServers() {
   return {
     servers: sortedServers,
     refreshServers,
+    getServer,
     createServer,
     updateServer,
     removeServer,
+    removeServers,
     probeServer,
   };
 }

@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import { toastError, toastSuccess } from '@agentgo/ui';
 import { Icon } from '@iconify/vue';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
 import ConfirmActionDialog from '../components/ConfirmActionDialog.vue';
+import BatchDeleteBar from '../components/BatchDeleteBar.vue';
+import ContentSkeleton from '../components/ContentSkeleton.vue';
 import PromptTemplateTable from '../components/PromptTemplateTable.vue';
+import { useBatchSelection } from '../composables/useBatchSelection';
 import type { PromptTemplate } from '../composables/usePromptTemplates';
-import { promptFailureI18n, usePromptTemplates } from '../composables/usePromptTemplates';
+import {
+  downloadPromptTemplate,
+  promptFailureI18n,
+  usePromptTemplates,
+} from '../composables/usePromptTemplates';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -22,12 +29,17 @@ const {
   last,
   refreshTemplates,
   removeTemplate,
+  removeTemplates,
 } = usePromptTemplates();
 
 const templateToDelete = ref<PromptTemplate | null>(null);
 const loading = ref(false);
 const paging = ref(false);
 const loadFailed = ref(false);
+const visibleIds = computed(() => templates.value.map((template) => template.id));
+const { selectedIds, toggle, toggleAll, clear, allSelected, count } = useBatchSelection(visibleIds);
+const batchDeleteOpen = ref(false);
+const batchDeleting = ref(false);
 
 onMounted(() => {
   void loadPage(1);
@@ -53,8 +65,21 @@ function openCreate() {
   void router.push({ name: 'prompt-template-create' });
 }
 
+function openHistory() {
+  void router.push({ name: 'prompt-template-history' });
+}
+
+function openView(template: PromptTemplate) {
+  void router.push({ name: 'prompt-template-view', params: { id: template.id } });
+}
+
 function openEdit(template: PromptTemplate) {
   void router.push({ name: 'prompt-template-edit', params: { id: template.id } });
+}
+
+function downloadTemplate(template: PromptTemplate) {
+  downloadPromptTemplate(template);
+  toastSuccess(t('prompts.downloaded', { name: template.name }), t('toast.success'));
 }
 
 async function confirmDelete() {
@@ -71,15 +96,35 @@ async function confirmDelete() {
   }
 }
 
+async function confirmBatchDelete() {
+  const ids = [...selectedIds.value];
+  if (!ids.length) return;
+  const remaining = templates.value.filter((template) => !ids.includes(template.id)).length;
+  const stepBack = remaining === 0 && page.value > 1;
+  const nextPage = stepBack ? page.value - 1 : page.value;
+  batchDeleting.value = true;
+  try {
+    await removeTemplates(ids);
+    clear();
+    batchDeleteOpen.value = false;
+    toastSuccess(t('selection.deleted', { count: ids.length }), t('toast.success'));
+    await loadPage(nextPage);
+  } catch (caught) {
+    toastError(t(promptFailureI18n(caught)), t('toast.error'));
+  } finally {
+    batchDeleting.value = false;
+  }
+}
+
 function retryLoad() {
   void loadPage(page.value);
 }
 </script>
 
 <template>
-  <section class="mx-auto min-h-[calc(100vh-129px)] w-full max-w-6xl px-4 py-10 sm:px-6">
+  <section class="ag-page">
     <div
-      class="relative mb-8 flex flex-col gap-4 overflow-hidden rounded-3xl border border-primary/10 bg-gradient-to-br from-primary/10 via-background to-cyan-400/10 p-6 sm:flex-row sm:items-end sm:justify-between"
+      class="ag-hero relative mb-8 flex flex-col gap-4 overflow-hidden rounded-3xl p-6 sm:flex-row sm:items-end sm:justify-between"
     >
       <div class="flex items-start gap-4">
         <div
@@ -92,27 +137,35 @@ function retryLoad() {
           <p class="mt-2 text-muted-foreground">{{ t('prompts.description') }}</p>
         </div>
       </div>
-      <button
-        class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/20"
-        type="button"
-        @click="openCreate"
-      >
-        <Icon icon="lucide:plus" width="18" height="18" aria-hidden="true" />
-        {{ t('prompts.createTemplate') }}
-      </button>
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <button class="ag-btn ag-btn-outline" type="button" @click="openHistory">
+          <Icon icon="lucide:history" width="18" height="18" aria-hidden="true" />
+          {{ t('prompts.history') }}
+        </button>
+        <button class="ag-btn ag-btn-primary" type="button" @click="openCreate">
+          <Icon icon="lucide:plus" width="18" height="18" aria-hidden="true" />
+          {{ t('prompts.createTemplate') }}
+        </button>
+      </div>
     </div>
 
-    <p v-if="loading" class="text-sm text-muted-foreground">{{ t('prompts.loading') }}</p>
+    <BatchDeleteBar
+      v-if="!loading && !loadFailed"
+      :count="count"
+      :total="templates.length"
+      :all-selected="allSelected"
+      :deleting="batchDeleting"
+      @toggle-all="toggleAll"
+      @remove="batchDeleteOpen = true"
+    />
+
+    <ContentSkeleton v-if="loading" kind="table" :label="t('prompts.loading')" />
     <div
       v-else-if="loadFailed"
       class="rounded-2xl border border-dashed border-input px-6 py-16 text-center"
     >
       <h2 class="text-lg font-semibold">{{ t('prompts.loadError') }}</h2>
-      <button
-        class="mt-5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        type="button"
-        @click="retryLoad"
-      >
+      <button class="ag-btn ag-btn-info mt-5" type="button" @click="retryLoad">
         {{ t('prompts.retry') }}
       </button>
     </div>
@@ -126,8 +179,12 @@ function retryLoad() {
       :first="first"
       :last="last"
       :paging="paging"
+      :selected-ids="selectedIds"
+      @view="openView"
+      @download="downloadTemplate"
       @edit="openEdit"
       @remove="templateToDelete = $event"
+      @toggle="toggle"
       @page="loadPage"
       @page-size="loadPage(1, $event)"
     />
@@ -139,11 +196,7 @@ function retryLoad() {
       </div>
       <h2 class="text-lg font-semibold">{{ t('prompts.emptyTitle') }}</h2>
       <p class="mt-2 text-sm text-muted-foreground">{{ t('prompts.emptyDescription') }}</p>
-      <button
-        class="mt-5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        type="button"
-        @click="openCreate"
-      >
+      <button class="ag-btn ag-btn-primary mt-5" type="button" @click="openCreate">
         {{ t('prompts.createTemplate') }}
       </button>
     </div>
@@ -155,6 +208,14 @@ function retryLoad() {
       :confirm-label="t('prompts.delete')"
       @update:open="templateToDelete = $event ? templateToDelete : null"
       @confirm="confirmDelete"
+    />
+    <ConfirmActionDialog
+      :open="batchDeleteOpen"
+      :title="t('selection.deleteSelected')"
+      :description="t('selection.confirmDelete', { count })"
+      :confirm-label="t('selection.deleteSelected')"
+      @update:open="batchDeleteOpen = $event"
+      @confirm="confirmBatchDelete"
     />
   </section>
 </template>

@@ -112,52 +112,45 @@ function variantClass(variant: ToastVariant) {
   border: 1px solid transparent;
   border-radius: 0.95rem;
   padding: 0.85rem 0.9rem;
-  color: #ecfdf5;
-  box-shadow: 0 16px 36px rgb(0 0 0 / 0.28);
+  color: var(--foreground);
+  background: var(--card);
+  box-shadow: 0 16px 36px -18px color-mix(in oklab, var(--foreground) 45%, transparent);
 }
 
 .toast-item--success {
-  border-color: #34d399;
-  background: #059669;
-  color: #ecfdf5;
+  border-color: color-mix(in oklab, var(--success) 46%, var(--border));
+  background: color-mix(in oklab, var(--success) 16%, var(--card));
 }
 
 .toast-item--error {
-  border-color: #f87171;
-  background: #dc2626;
-  color: #fef2f2;
+  border-color: color-mix(in oklab, var(--destructive) 46%, var(--border));
+  background: color-mix(in oklab, var(--destructive) 16%, var(--card));
 }
 
 .toast-item--warning {
-  border-color: #fb923c;
-  background: #ea580c;
-  color: #fff7ed;
+  border-color: color-mix(in oklab, var(--warning) 50%, var(--border));
+  background: color-mix(in oklab, var(--warning) 18%, var(--card));
 }
 
 .toast-item--info {
-  border-color: #38bdf8;
-  background: #0284c7;
-  color: #f0f9ff;
+  border-color: color-mix(in oklab, var(--info) 46%, var(--border));
+  background: color-mix(in oklab, var(--info) 16%, var(--card));
 }
 
-html.dark .toast-item--success {
-  background: #047857;
-  border-color: #34d399;
+.toast-item--success .toast-icon {
+  color: var(--success);
 }
 
-html.dark .toast-item--error {
-  background: #b91c1c;
-  border-color: #f87171;
+.toast-item--error .toast-icon {
+  color: var(--destructive);
 }
 
-html.dark .toast-item--warning {
-  background: #c2410c;
-  border-color: #fb923c;
+.toast-item--warning .toast-icon {
+  color: var(--warning);
 }
 
-html.dark .toast-item--info {
-  background: #0369a1;
-  border-color: #38bdf8;
+.toast-item--info .toast-icon {
+  color: var(--info);
 }
 
 .toast-icon {

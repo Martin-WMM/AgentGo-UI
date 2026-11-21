@@ -68,52 +68,56 @@ onBeforeUnmount(() => {
   <div class="ml-auto flex items-center gap-1">
     <div v-if="auth.isAuthenticated" ref="userMenuRoot" class="relative">
       <button
-        class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent"
+        class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-accent"
         type="button"
         :aria-expanded="userMenuOpen"
         :aria-label="t('user.menu')"
         @click="userMenuOpen = !userMenuOpen"
       >
         <span
-          class="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-xs font-bold text-white"
+          class="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-info text-xs font-bold text-primary-foreground shadow-sm"
         >
           <img v-if="avatarUrl" :src="avatarUrl" :alt="userName" class="size-full object-cover" />
           <span v-else>{{ userInitials }}</span>
         </span>
         <span class="hidden max-w-32 truncate text-sm font-medium lg:block">{{ userName }}</span>
-        <Icon icon="lucide:chevron-down" width="15" height="15" aria-hidden="true" />
+        <Icon
+          icon="lucide:chevron-down"
+          class="transition-transform duration-200"
+          :class="userMenuOpen ? 'rotate-180' : ''"
+          width="15"
+          height="15"
+          aria-hidden="true"
+        />
       </button>
-      <div
-        v-if="userMenuOpen"
-        class="absolute right-0 top-12 w-48 rounded-xl border border-input bg-background p-2 shadow-xl"
-      >
-        <p class="px-3 py-2 text-xs text-muted-foreground">{{ t('user.signedInAs') }}</p>
-        <p class="truncate px-3 pb-1 text-sm font-medium">{{ userName }}</p>
-        <p class="truncate px-3 pb-2 text-xs text-muted-foreground">{{ auth.user?.email }}</p>
-        <RouterLink
-          to="/console/settings"
-          class="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
-          @click="userMenuOpen = false"
+      <Transition name="ag-pop">
+        <div
+          v-if="userMenuOpen"
+          class="absolute right-0 top-12 w-48 rounded-xl border border-input bg-card p-2 shadow-xl shadow-foreground/10"
         >
-          <Icon icon="lucide:settings-2" width="16" height="16" aria-hidden="true" />
-          {{ t('navigation.settings') }}
-        </RouterLink>
-        <button
-          type="button"
-          class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
-          @click="auth.logout"
-        >
-          <Icon icon="lucide:log-out" width="16" height="16" aria-hidden="true" />
-          {{ t('user.logout') }}
-        </button>
-      </div>
+          <p class="px-3 py-2 text-xs text-muted-foreground">{{ t('user.signedInAs') }}</p>
+          <p class="truncate px-3 pb-1 text-sm font-medium">{{ userName }}</p>
+          <p class="truncate px-3 pb-2 text-xs text-muted-foreground">{{ auth.user?.email }}</p>
+          <RouterLink
+            to="/console/settings"
+            class="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
+            @click="userMenuOpen = false"
+          >
+            <Icon icon="lucide:settings-2" width="16" height="16" aria-hidden="true" />
+            {{ t('navigation.settings') }}
+          </RouterLink>
+          <button
+            type="button"
+            class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
+            @click="auth.logout"
+          >
+            <Icon icon="lucide:log-out" width="16" height="16" aria-hidden="true" />
+            {{ t('user.logout') }}
+          </button>
+        </div>
+      </Transition>
     </div>
-    <button
-      v-else
-      type="button"
-      class="inline-flex items-center gap-2 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
-      @click="auth.login"
-    >
+    <button v-else type="button" class="ag-btn ag-btn-info ag-btn-sm" @click="auth.login">
       <Icon icon="lucide:log-in" width="15" height="15" aria-hidden="true" />
       {{ t('user.signIn') }}
     </button>

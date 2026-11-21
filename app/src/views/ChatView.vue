@@ -10,9 +10,7 @@ const message = ref(typeof route.query.prompt === 'string' ? route.query.prompt 
 </script>
 
 <template>
-  <section
-    class="mx-auto flex min-h-[calc(100vh-129px)] w-full max-w-4xl flex-col px-4 py-8 sm:px-6"
-  >
+  <section class="ag-page ag-page--tight flex flex-col">
     <div class="flex flex-1 flex-col items-center justify-center text-center">
       <div
         class="mb-5 flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/10"
@@ -22,7 +20,10 @@ const message = ref(typeof route.query.prompt === 'string' ? route.query.prompt 
       <h1 class="text-2xl font-semibold tracking-tight">{{ t('chat.title') }}</h1>
       <p class="mt-2 text-sm text-muted-foreground">{{ t('chat.description') }}</p>
     </div>
-    <form class="rounded-2xl border border-input bg-background p-2 shadow-lg" @submit.prevent>
+    <form
+      class="rounded-2xl border border-input bg-card/90 p-2 shadow-lg shadow-foreground/10 transition-shadow duration-300 hover:shadow-xl"
+      @submit.prevent
+    >
       <label for="chat-message" class="sr-only">{{ t('home.placeholder') }}</label>
       <textarea
         id="chat-message"
@@ -34,7 +35,7 @@ const message = ref(typeof route.query.prompt === 'string' ? route.query.prompt 
       <div class="flex justify-end border-t border-input/70 pt-2">
         <button
           type="submit"
-          class="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground"
+          class="ag-btn ag-btn-primary ag-btn-icon"
           :aria-label="t('home.send')"
         >
           <Icon icon="lucide:arrow-up" width="18" height="18" aria-hidden="true" />

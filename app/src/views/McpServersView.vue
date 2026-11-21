@@ -1,50 +1,42 @@
 <script setup lang="ts">
 import { toastError, toastSuccess } from '@agentgo/ui';
 import { Icon } from '@iconify/vue';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 
 import ConfirmActionDialog from '../components/ConfirmActionDialog.vue';
+import BatchDeleteBar from '../components/BatchDeleteBar.vue';
+import ContentSkeleton from '../components/ContentSkeleton.vue';
 import McpServerCard from '../components/McpServerCard.vue';
-import McpServerFormDialog from '../components/McpServerFormDialog.vue';
-import type { ManagedMcpServer, McpAuthType, McpServerStatus } from '../composables/useMcpServers';
+import type { ManagedMcpServer, McpServerStatus } from '../composables/useMcpServers';
 import { mcpFailureI18n, mcpServerStatuses, useMcpServers } from '../composables/useMcpServers';
+import { useBatchSelection } from '../composables/useBatchSelection';
 
 type StatusFilter = McpServerStatus | 'ALL';
 
 const filters: StatusFilter[] = ['ALL', ...mcpServerStatuses];
 
 const { t } = useI18n();
-const { servers, refreshServers, createServer, updateServer, removeServer, probeServer } =
-  useMcpServers();
+const router = useRouter();
+const { servers, refreshServers, removeServer, removeServers, probeServer } = useMcpServers();
 
 const statusFilter = ref<StatusFilter>('ALL');
-const dialogOpen = ref(false);
-const editing = ref<ManagedMcpServer | null>(null);
 const serverToDelete = ref<ManagedMcpServer | null>(null);
 const deletingServerId = ref<string | null>(null);
 const probingServerId = ref<string | null>(null);
-const saving = ref(false);
 const loading = ref(false);
 const loadFailed = ref(false);
-const form = reactive({
-  name: '',
-  endpointUrl: '',
-  authType: 'NONE' as McpAuthType,
-  authToken: '',
-  authHeaderName: '',
-  customHeaders: '{}',
-  protocolVersion: '2025-03-26',
-  enabled: true,
-  description: '',
-});
 
 const visibleServers = computed(() =>
   statusFilter.value === 'ALL'
     ? servers.value
     : servers.value.filter((server) => server.status === statusFilter.value),
 );
-const dialogTitle = computed(() => t(editing.value ? 'mcp.editServer' : 'mcp.createServer'));
+const visibleIds = computed(() => visibleServers.value.map((server) => server.id));
+const { selectedIds, toggle, toggleAll, clear, allSelected, count } = useBatchSelection(visibleIds);
+const batchDeleteOpen = ref(false);
+const batchDeleting = ref(false);
 
 onMounted(() => {
   void reload();
@@ -63,78 +55,12 @@ async function reload() {
   }
 }
 
-function resetForm(server?: ManagedMcpServer | null) {
-  editing.value = server ?? null;
-  form.name = server?.name ?? '';
-  form.endpointUrl = server?.endpointUrl ?? '';
-  form.authType = server?.authType ?? 'NONE';
-  form.authToken = server?.authToken ?? '';
-  form.authHeaderName = server?.authHeaderName ?? '';
-  form.customHeaders = JSON.stringify(server?.customHeaders ?? {}, null, 2);
-  form.protocolVersion = server?.protocolVersion || '2025-03-26';
-  form.enabled = server?.enabled ?? true;
-  form.description = server?.description ?? '';
-}
-
 function openCreate() {
-  resetForm(null);
-  dialogOpen.value = true;
+  void router.push({ name: 'mcp-server-create' });
 }
 
 function openEdit(server: ManagedMcpServer) {
-  resetForm(server);
-  dialogOpen.value = true;
-}
-
-function parseCustomHeaders(): Record<string, string> | null {
-  const raw = form.customHeaders.trim() || '{}';
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
-    const result: Record<string, string> = {};
-    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
-      if (typeof value !== 'string') return null;
-      result[key] = value;
-    }
-    return result;
-  } catch {
-    return null;
-  }
-}
-
-async function saveServer() {
-  if (!form.name.trim() || !form.endpointUrl.trim() || saving.value) return;
-  const customHeaders = parseCustomHeaders();
-  if (!customHeaders) {
-    toastError(t('mcp.customHeadersInvalid'), t('toast.error'));
-    return;
-  }
-  saving.value = true;
-  const input = {
-    name: form.name,
-    endpointUrl: form.endpointUrl,
-    authType: form.authType,
-    authToken: form.authToken,
-    authHeaderName: form.authHeaderName,
-    customHeaders,
-    protocolVersion: form.protocolVersion,
-    enabled: form.enabled,
-    description: form.description,
-  };
-  try {
-    if (editing.value) {
-      await updateServer(editing.value.id, input);
-      toastSuccess(t('mcp.updated', { name: form.name.trim() }), t('toast.success'));
-    } else {
-      await createServer(input);
-      toastSuccess(t('mcp.created', { name: form.name.trim() }), t('toast.success'));
-    }
-    dialogOpen.value = false;
-  } catch (caught) {
-    toastError(t(mcpFailureI18n(caught)), t('toast.error'));
-  } finally {
-    saving.value = false;
-  }
+  void router.push({ name: 'mcp-server-edit', params: { id: server.id } });
 }
 
 async function confirmDelete() {
@@ -148,6 +74,22 @@ async function confirmDelete() {
     toastError(t(mcpFailureI18n(caught)), t('toast.error'));
   } finally {
     deletingServerId.value = null;
+  }
+}
+
+async function confirmBatchDelete() {
+  const ids = [...selectedIds.value];
+  if (!ids.length) return;
+  batchDeleting.value = true;
+  try {
+    await removeServers(ids);
+    clear();
+    batchDeleteOpen.value = false;
+    toastSuccess(t('selection.deleted', { count: ids.length }), t('toast.success'));
+  } catch (caught) {
+    toastError(t(mcpFailureI18n(caught)), t('toast.error'));
+  } finally {
+    batchDeleting.value = false;
   }
 }
 
@@ -168,9 +110,9 @@ async function runProbe(server: ManagedMcpServer) {
 </script>
 
 <template>
-  <section class="mx-auto min-h-[calc(100vh-129px)] w-full max-w-6xl px-4 py-10 sm:px-6">
+  <section class="ag-page">
     <div
-      class="relative mb-8 flex flex-col gap-4 overflow-hidden rounded-3xl border border-primary/10 bg-gradient-to-br from-primary/10 via-background to-cyan-400/10 p-6 sm:flex-row sm:items-end sm:justify-between"
+      class="ag-hero relative mb-8 flex flex-col gap-4 overflow-hidden rounded-3xl p-6 sm:flex-row sm:items-end sm:justify-between"
     >
       <div class="flex items-start gap-4">
         <div
@@ -183,11 +125,7 @@ async function runProbe(server: ManagedMcpServer) {
           <p class="mt-2 text-muted-foreground">{{ t('mcp.description') }}</p>
         </div>
       </div>
-      <button
-        class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/20"
-        type="button"
-        @click="openCreate"
-      >
+      <button class="ag-btn ag-btn-primary" type="button" @click="openCreate">
         <Icon icon="lucide:plus" width="18" height="18" aria-hidden="true" />
         {{ t('mcp.createServer') }}
       </button>
@@ -199,7 +137,7 @@ async function runProbe(server: ManagedMcpServer) {
         :key="item"
         type="button"
         role="tab"
-        class="rounded-full border px-3 py-1.5 text-sm font-medium"
+        class="ag-chip rounded-full border px-3 py-1.5 text-sm font-medium"
         :class="
           item === statusFilter
             ? 'border-primary bg-primary text-primary-foreground'
@@ -212,21 +150,27 @@ async function runProbe(server: ManagedMcpServer) {
       </button>
     </div>
 
-    <p v-if="loading" class="text-sm text-muted-foreground">{{ t('mcp.loading') }}</p>
+    <BatchDeleteBar
+      v-if="!loading && !loadFailed"
+      :count="count"
+      :total="visibleServers.length"
+      :all-selected="allSelected"
+      :deleting="batchDeleting"
+      @toggle-all="toggleAll"
+      @remove="batchDeleteOpen = true"
+    />
+
+    <ContentSkeleton v-if="loading" kind="cards" :label="t('mcp.loading')" />
     <div
       v-else-if="loadFailed"
       class="rounded-2xl border border-dashed border-input px-6 py-16 text-center"
     >
       <h2 class="text-lg font-semibold">{{ t('mcp.loadError') }}</h2>
-      <button
-        class="mt-5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        type="button"
-        @click="reload"
-      >
+      <button class="ag-btn ag-btn-info mt-5" type="button" @click="reload">
         {{ t('mcp.retry') }}
       </button>
     </div>
-    <div v-else-if="visibleServers.length" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div v-else-if="visibleServers.length" class="ag-card-grid">
       <McpServerCard
         v-for="(server, index) in visibleServers"
         :key="server.id"
@@ -234,9 +178,11 @@ async function runProbe(server: ManagedMcpServer) {
         :index="index"
         :deleting="deletingServerId === server.id"
         :probing="probingServerId === server.id"
+        :selected="selectedIds.includes(server.id)"
         @edit="openEdit(server)"
         @remove="serverToDelete = server"
         @probe="runProbe(server)"
+        @toggle="toggle(server.id)"
       />
     </div>
     <div v-else class="rounded-2xl border border-dashed border-input px-6 py-16 text-center">
@@ -250,30 +196,11 @@ async function runProbe(server: ManagedMcpServer) {
             : t('mcp.emptyFilteredDescription', { status: t(`mcp.statuses.${statusFilter}`) })
         }}
       </p>
-      <button
-        class="mt-5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        type="button"
-        @click="openCreate"
-      >
+      <button class="ag-btn ag-btn-primary mt-5" type="button" @click="openCreate">
         {{ t('mcp.createServer') }}
       </button>
     </div>
 
-    <McpServerFormDialog
-      v-model:open="dialogOpen"
-      v-model:name="form.name"
-      v-model:endpoint-url="form.endpointUrl"
-      v-model:auth-type="form.authType"
-      v-model:auth-token="form.authToken"
-      v-model:auth-header-name="form.authHeaderName"
-      v-model:custom-headers="form.customHeaders"
-      v-model:protocol-version="form.protocolVersion"
-      v-model:enabled="form.enabled"
-      v-model:description="form.description"
-      :title="dialogTitle"
-      :saving="saving"
-      @save="saveServer"
-    />
     <ConfirmActionDialog
       :open="Boolean(serverToDelete)"
       :title="t('mcp.delete')"
@@ -281,6 +208,14 @@ async function runProbe(server: ManagedMcpServer) {
       :confirm-label="t('mcp.delete')"
       @update:open="serverToDelete = $event ? serverToDelete : null"
       @confirm="confirmDelete"
+    />
+    <ConfirmActionDialog
+      :open="batchDeleteOpen"
+      :title="t('selection.deleteSelected')"
+      :description="t('selection.confirmDelete', { count })"
+      :confirm-label="t('selection.deleteSelected')"
+      @update:open="batchDeleteOpen = $event"
+      @confirm="confirmBatchDelete"
     />
   </section>
 </template>
