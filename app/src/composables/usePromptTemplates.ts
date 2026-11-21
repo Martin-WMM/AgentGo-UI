@@ -1,34 +1,89 @@
 import { computed, ref } from 'vue';
 
+import { isResourceIcon, type ResourceIconValue } from '@agentgo/ui';
+
+import { batchDeleteIds } from '../api/batchDelete';
 import { FileRequestError, apiData, apiRequest } from '../api/fileRequest';
+import { DEFAULT_WORKSPACE_COLOR, normalizeWorkspaceColor } from '../lib/workspaceColors';
 
 export type PromptEngine = 'SIMPLE' | 'JINJA2';
 
 export interface PromptTemplate {
   id: string;
+  groupName: string;
   name: string;
+  version: string;
+  revision: number;
   engine: PromptEngine;
   content: string;
   description: string;
+  tags: string[];
+  color: string;
+  icon: ResourceIconValue | null;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface PromptTemplateInput {
+  groupName: string;
   name: string;
   engine: PromptEngine;
   content: string;
   description: string;
+  message: string;
+  tags: string[];
+  color: string;
+  icon: ResourceIconValue | null;
+}
+
+export interface PromptRevision {
+  id: string;
+  templateId: string;
+  groupName: string;
+  name: string;
+  version: string;
+  revision: number;
+  parentRevision: number | null;
+  message: string;
+  author: string;
+  diff: string;
+  createdAt: string;
 }
 
 interface PromptTemplateDto {
   id: string;
+  groupName?: string;
   name: string;
+  version?: string;
+  revision?: number;
   engine: PromptEngine;
   content: string;
   description?: string | null;
+  tags?: string[] | null;
+  metadata?: {
+    color?: string | null;
+    icon?: { source?: string | null; value?: string | null } | null;
+  } | null;
   createdAt: string;
   updatedAt: string;
+}
+
+interface PromptRevisionDto {
+  id: string;
+  templateId: string;
+  groupName?: string;
+  name?: string;
+  version: string;
+  revision: number;
+  parentRevision?: number | null;
+  message: string;
+  author: string;
+  diff: string;
+  createdAt: string;
+}
+
+interface PromptRevisionPageDto {
+  data: PromptRevisionDto[];
 }
 
 export const PROMPT_PAGE_SIZES = [10, 20, 50] as const;
@@ -54,13 +109,29 @@ const totalPages = ref(0);
 const first = ref(true);
 const last = ref(true);
 
+function toIcon(dto: PromptTemplateDto): ResourceIconValue | null {
+  const source = dto.metadata?.icon?.source;
+  const value = dto.metadata?.icon?.value?.trim() ?? '';
+  if (source === 'ICONIFY' || source === 'URL') {
+    const icon: ResourceIconValue = { source, value };
+    return isResourceIcon(icon) ? icon : null;
+  }
+  return null;
+}
+
 function toTemplate(dto: PromptTemplateDto): PromptTemplate {
   return {
-    id: dto.id,
+    id: String(dto.id),
+    groupName: dto.groupName?.trim() ?? '',
     name: dto.name,
+    version: dto.version?.trim() || 'latest',
+    revision: dto.revision ?? 1,
     engine: dto.engine,
     content: dto.content,
     description: dto.description?.trim() ?? '',
+    tags: (dto.tags ?? []).map((tag) => tag.trim()).filter(Boolean),
+    color: normalizeWorkspaceColor(dto.metadata?.color),
+    icon: toIcon(dto),
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
   };
@@ -68,11 +139,41 @@ function toTemplate(dto: PromptTemplateDto): PromptTemplate {
 
 function requestBody(input: PromptTemplateInput) {
   return {
+    groupName: input.groupName.trim(),
     name: input.name.trim(),
     engine: input.engine,
     content: input.content,
     description: input.description.trim() || null,
+    message: input.message.trim() || null,
+    tags: input.tags,
+    metadata: {
+      color: normalizeWorkspaceColor(input.color || DEFAULT_WORKSPACE_COLOR),
+      icon: input.icon,
+    },
   };
+}
+
+/** Saves the template body as a Markdown file named from its group and name. */
+export function downloadPromptTemplate(
+  template: Pick<PromptTemplate, 'groupName' | 'name' | 'content'>,
+) {
+  const blob = new Blob([template.content], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  const raw = [template.groupName, template.name]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join('-');
+  const filename = raw
+    .replace(/[\\/:*?"<>|\s]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120);
+  anchor.href = url;
+  anchor.download = `${filename || 'prompt'}.md`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
 }
 
 /** Maps a prompt-template API failure onto an i18n message key. */
@@ -180,6 +281,61 @@ export function usePromptTemplates() {
     templates.value = templates.value.filter((item) => item.id !== id);
   }
 
+  async function removeTemplates(ids: string[]) {
+    await batchDeleteIds('/api/v1/promptTemplates/batch-delete', ids);
+    const removed = new Set(ids);
+    templates.value = templates.value.filter((item) => !removed.has(item.id));
+  }
+
+  function toRevision(revision: PromptRevisionDto): PromptRevision {
+    return {
+      id: String(revision.id),
+      templateId: String(revision.templateId),
+      groupName: revision.groupName?.trim() ?? '',
+      name: revision.name?.trim() ?? '',
+      version: revision.version,
+      revision: revision.revision,
+      parentRevision: revision.parentRevision ?? null,
+      message: revision.message,
+      author: revision.author,
+      diff: revision.diff,
+      createdAt: revision.createdAt,
+    };
+  }
+
+  async function listRevisions(id: string) {
+    const data = await apiData<PromptRevisionPageDto>(
+      `/api/v1/promptTemplates/${encodeURIComponent(id)}/revisions?page=1&size=100`,
+    );
+    return data.data.map(toRevision);
+  }
+
+  async function loadRevisionHistory() {
+    const rows: PromptTemplate[] = [];
+    let nextPage = 1;
+    let pages = 1;
+    while (nextPage <= pages && nextPage <= 5) {
+      const params = new URLSearchParams({
+        page: String(nextPage),
+        size: '100',
+        sort: 'updatedAt',
+        order: 'DESC',
+      });
+      const data = await apiData<PromptTemplatePageDto | PromptTemplateDto[]>(
+        `/api/v1/promptTemplates?${params.toString()}`,
+      );
+      if (Array.isArray(data)) {
+        rows.push(...data.map(toTemplate));
+        break;
+      }
+      rows.push(...data.data.map(toTemplate));
+      pages = data.totalPages;
+      nextPage += 1;
+    }
+    const groups = await Promise.all(rows.map((template) => listRevisions(template.id)));
+    return groups.flat().sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+  }
+
   async function previewTemplate(
     engine: PromptEngine,
     content: string,
@@ -216,6 +372,9 @@ export function usePromptTemplates() {
     createTemplate,
     updateTemplate,
     removeTemplate,
+    removeTemplates,
+    listRevisions,
+    loadRevisionHistory,
     previewTemplate,
     renderTemplate,
   };
