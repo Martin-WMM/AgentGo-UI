@@ -448,3 +448,66 @@ const pieSegments = computed(() => {
     </g>
     <g v-else-if="type === 'stackedBar'">
       <g v-for="(point, index) in points" :key="point.label">
+        <rect
+          :x="point.x - 25"
+          :y="point.y"
+          width="50"
+          :height="230 - point.y"
+          rx="5"
+          :fill="colorAt(index)"
+          @click="emit('select', index)"
+        />
+        <rect
+          :x="point.x - 25"
+          :y="230 - ((compareData[index]?.value ?? point.value / 2) / max) * 178"
+          width="50"
+          :height="((compareData[index]?.value ?? point.value / 2) / max) * 178"
+          rx="5"
+          :fill="colors.fill"
+        />
+      </g>
+    </g>
+    <g v-else>
+      <g v-for="(point, index) in points" :key="point.label">
+        <rect
+          v-if="horizontal"
+          x="80"
+          :y="30 + index * 31"
+          :width="(point.value / max) * 500"
+          height="20"
+          rx="5"
+          :fill="colorAt(index)"
+          @click="emit('select', index)"
+        />
+        <rect
+          v-else
+          :x="point.x - 22"
+          :y="point.y"
+          width="44"
+          :height="230 - point.y"
+          rx="7"
+          :fill="colorAt(index)"
+          @click="emit('select', index)"
+        />
+      </g>
+    </g>
+    <text
+      v-if="type === 'pie'"
+      x="350"
+      y="151"
+      text-anchor="middle"
+      class="fill-foreground text-[28px] font-semibold"
+    >
+      {{ total }}
+    </text>
+    <text
+      v-if="type === 'gauge'"
+      x="350"
+      y="195"
+      text-anchor="middle"
+      class="fill-foreground text-[34px] font-semibold"
+    >
+      {{ data[0]?.value ?? 0 }}%
+    </text>
+  </svg>
+</template>
