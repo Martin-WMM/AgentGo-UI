@@ -148,3 +148,112 @@ async function saveServer() {
         >
           <Icon icon="lucide:save" width="16" height="16" aria-hidden="true" />
           {{ saving ? t('mcp.saving') : t('mcp.save') }}
+        </button>
+      </div>
+    </div>
+
+    <ContentSkeleton v-if="loading" kind="form" :label="t('mcp.loading')" />
+    <div
+      v-else-if="loadFailed"
+      class="rounded-2xl border border-dashed border-input px-6 py-16 text-center"
+    >
+      <h2 class="text-lg font-semibold">{{ t('mcp.notFound') }}</h2>
+      <button class="ag-btn ag-btn-info mt-5" type="button" @click="goBack">
+        {{ t('mcp.backToList') }}
+      </button>
+    </div>
+    <form v-else class="space-y-4" @submit.prevent="saveServer">
+      <label class="block text-sm font-medium">
+        {{ t('mcp.group') }}
+        <input
+          v-model="form.groupName"
+          required
+          maxlength="255"
+          class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+          :placeholder="t('mcp.groupPlaceholder')"
+        />
+      </label>
+      <label class="block text-sm font-medium">
+        {{ t('mcp.name') }}
+        <input
+          v-model="form.name"
+          required
+          maxlength="255"
+          class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+        />
+      </label>
+      <label class="block text-sm font-medium">
+        {{ t('mcp.endpointUrl') }}
+        <input
+          v-model="form.endpointUrl"
+          required
+          maxlength="2048"
+          type="url"
+          :placeholder="t('mcp.endpointUrlPlaceholder')"
+          class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+        />
+      </label>
+      <div class="ag-field-grid">
+        <label class="block text-sm font-medium">
+          {{ t('mcp.authType') }}
+          <select
+            v-model="form.authType"
+            class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option v-for="item in mcpAuthTypes" :key="item" :value="item">
+              {{ t(`mcp.authTypes.${item}`) }}
+            </option>
+          </select>
+        </label>
+        <label class="block text-sm font-medium">
+          {{ t('mcp.protocolVersion') }}
+          <input
+            v-model="form.protocolVersion"
+            maxlength="32"
+            :placeholder="t('mcp.protocolVersionPlaceholder')"
+            class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+          />
+        </label>
+      </div>
+      <label v-if="showAuthHeaderName" class="block text-sm font-medium">
+        {{ t('mcp.authHeaderName') }}
+        <input
+          v-model="form.authHeaderName"
+          maxlength="255"
+          :placeholder="t('mcp.authHeaderNamePlaceholder')"
+          class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+        />
+      </label>
+      <label v-if="showAuthToken" class="block text-sm font-medium">
+        {{ t('mcp.authToken') }}
+        <input
+          v-model="form.authToken"
+          maxlength="4000"
+          type="password"
+          autocomplete="off"
+          class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+        />
+      </label>
+      <label class="block text-sm font-medium">
+        {{ t('mcp.descriptionLabel') }}
+        <textarea
+          v-model="form.description"
+          maxlength="2000"
+          rows="2"
+          class="mt-2 w-full resize-none rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+        />
+      </label>
+      <JsonEditor
+        v-model="form.customHeaders"
+        :label="t('mcp.customHeaders')"
+        placeholder='{"X-Tenant":"demo"}'
+        expect="string-map"
+      />
+      <p class="text-xs text-muted-foreground">{{ t('mcp.customHeadersHint') }}</p>
+      <label class="flex items-center gap-2 text-sm font-medium">
+        <input v-model="form.enabled" type="checkbox" class="size-4 rounded border-input" />
+        {{ t('mcp.enabled') }}
+      </label>
+    </form>
+  </section>
+</template>
