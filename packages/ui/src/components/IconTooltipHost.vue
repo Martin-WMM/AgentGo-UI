@@ -148,3 +148,113 @@ function show(target: IconTipTarget, immediate: boolean) {
     pending = null;
     pendingLabel = '';
     suppressTitle(target.element);
+    const alreadyOpen = open.value;
+    open.value = true;
+    if (!alreadyOpen) placed.value = false;
+    if (!watchFrame) watchAnchor();
+    void place(target.element);
+  }, delay);
+}
+
+function syncFromPoint(x: number, y: number, immediate = false) {
+  const target = findIconButton(x, y);
+  if (!target) {
+    scheduleHide();
+    return;
+  }
+  show(target, immediate);
+}
+
+function onPointerOver(event: PointerEvent) {
+  pointerInside = true;
+  lastX = event.clientX;
+  lastY = event.clientY;
+  syncFromPoint(lastX, lastY);
+}
+
+function onPointerMove(event: PointerEvent) {
+  pointerInside = true;
+  lastX = event.clientX;
+  lastY = event.clientY;
+  if (moveFrame) return;
+  moveFrame = window.requestAnimationFrame(() => {
+    moveFrame = 0;
+    if (!pointerInside) return;
+    syncFromPoint(lastX, lastY);
+  });
+}
+
+function onPointerLeave() {
+  pointerInside = false;
+  scheduleHide();
+}
+
+function onPointerDown() {
+  hideNow();
+}
+
+function onFocusIn(event: FocusEvent) {
+  const target = event.target;
+  if (!(target instanceof HTMLElement) || !target.matches(':focus-visible')) return;
+  const rect = target.getBoundingClientRect();
+  const match = findIconButton(rect.left + rect.width / 2, rect.top + rect.height / 2);
+  if (!match || match.element !== target) return;
+  show(match, true);
+}
+
+function onFocusOut(event: FocusEvent) {
+  if (anchor && event.relatedTarget instanceof Node && anchor.contains(event.relatedTarget)) return;
+  scheduleHide();
+}
+
+function onKeyDown(event: KeyboardEvent) {
+  if (event.key === 'Escape') hideNow();
+}
+
+function onScroll() {
+  if (!pointerInside || !open.value) return;
+  syncFromPoint(lastX, lastY, true);
+}
+
+onMounted(() => {
+  document.addEventListener('pointerover', onPointerOver, true);
+  document.addEventListener('pointermove', onPointerMove, { passive: true });
+  document.addEventListener('pointerdown', onPointerDown, true);
+  document.addEventListener('pointerleave', onPointerLeave);
+  document.addEventListener('focusin', onFocusIn);
+  document.addEventListener('focusout', onFocusOut);
+  document.addEventListener('keydown', onKeyDown);
+  document.addEventListener('scroll', onScroll, true);
+  window.addEventListener('blur', hideNow);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerover', onPointerOver, true);
+  document.removeEventListener('pointermove', onPointerMove);
+  document.removeEventListener('pointerdown', onPointerDown, true);
+  document.removeEventListener('pointerleave', onPointerLeave);
+  document.removeEventListener('focusin', onFocusIn);
+  document.removeEventListener('focusout', onFocusOut);
+  document.removeEventListener('keydown', onKeyDown);
+  document.removeEventListener('scroll', onScroll, true);
+  window.removeEventListener('blur', hideNow);
+  if (moveFrame) window.cancelAnimationFrame(moveFrame);
+  hideNow();
+});
+</script>
+
+<template>
+  <Teleport to="body">
+    <div
+      v-show="open"
+      ref="tipRef"
+      class="ag-icon-tip"
+      :class="{ 'ag-icon-tip--open': placed }"
+      role="tooltip"
+      aria-hidden="true"
+      :style="{ top: `${top}px`, left: `${left}px` }"
+    >
+      {{ label }}
+    </div>
+  </Teleport>
+</template>
