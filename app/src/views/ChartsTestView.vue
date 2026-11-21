@@ -148,3 +148,153 @@ const linePath = computed(() => {
     return points.map((point, index) => `${index ? 'L' : 'M'} ${point.x} ${point.y}`).join(' ');
   }
   return (
+    points.reduce((path, point, index) => {
+      if (index === 0) return `M ${point.x} ${point.y}`;
+      const previous = points[index - 1];
+      const midpointX = (previous.x + point.x) / 2;
+      const midpointY = (previous.y + point.y) / 2;
+      return `${path} Q ${previous.x} ${previous.y} ${midpointX} ${midpointY}`;
+    }, '') + ` T ${points.at(-1)?.x} ${points.at(-1)?.y}`
+  );
+});
+const areaPath = computed(() => `${linePath.value} L 646 228 L 54 228 Z`);
+const donutSegments = computed(() => {
+  let offset = 0;
+  return data.value.map((point, index) => {
+    const portion = point.value / total.value;
+    const segment = { ...point, index, dash: portion * 100, offset };
+    offset += portion * 100;
+    return segment;
+  });
+});
+
+function setPointValue(index: number, event: Event) {
+  const value = Number((event.target as HTMLInputElement).value);
+  data.value[index] = { ...data.value[index], value: Math.max(0, Math.min(100, value || 0)) };
+}
+
+function selectPoint(index: number) {
+  selected.value = index;
+}
+
+function setChartTheme(theme: 'light' | 'dark') {
+  chartTheme.value = theme;
+  chartBackground.value = theme === 'dark' ? '#1f2937' : '#ffffff';
+  titleColor.value = theme === 'dark' ? '#f9fafb' : '#111827';
+}
+
+watch(appTheme, (theme) => setChartTheme(theme === 'dark' ? 'dark' : 'light'));
+
+function csvEscape(value: string | number) {
+  const text = String(value);
+  return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+}
+
+type DataExportFormat = 'csv' | 'json' | 'excel';
+type ImageExportFormat = 'png' | 'jpeg' | 'svg';
+
+function exportData(format: DataExportFormat = 'csv') {
+  if (format === 'json') {
+    download(
+      new Blob([JSON.stringify(tableRows.value, null, 2)], { type: 'application/json' }),
+      'agentgo-chart-data.json',
+    );
+    return;
+  }
+  if (format === 'excel') {
+    const rows = tableRows.value
+      .map(
+        (row) =>
+          `<tr><td>${row.label}</td><td>${row.value}</td><td>${row.cost}</td><td>${row.users}</td></tr>`,
+      )
+      .join('');
+    const workbook = `<html><head><meta charset="utf-8"></head><body><table><thead><tr><th>Day</th><th>Revenue</th><th>Cost</th><th>Users</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+    download(
+      new Blob([workbook], { type: 'application/vnd.ms-excel;charset=utf-8' }),
+      'agentgo-chart-data.xls',
+    );
+    return;
+  }
+  const csv = [
+    'label,value,cost,users',
+    ...tableRows.value.map(
+      (row) => `${csvEscape(row.label)},${row.value},${row.cost},${row.users}`,
+    ),
+  ].join('\n');
+  download(new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'agentgo-chart-data.csv');
+}
+
+async function exportImage(format: ImageExportFormat = 'png') {
+  await nextTick();
+  const svg = chartEl.value?.querySelector('svg');
+  if (!svg) return;
+  const cloned = svg.cloneNode(true) as SVGElement;
+  cloned.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  const svgData = new XMLSerializer().serializeToString(cloned);
+  if (format === 'svg') {
+    download(new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' }), 'agentgo-chart.svg');
+    return;
+  }
+  const image = new Image();
+  image.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1400;
+    canvas.height = 720;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    context.fillStyle = chartBackground.value;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+    const extension = format === 'jpeg' ? 'jpeg' : 'png';
+    canvas.toBlob((blob) => blob && download(blob, `agentgo-chart.${extension}`), mimeType, 0.95);
+    URL.revokeObjectURL(image.src);
+  };
+  image.src = URL.createObjectURL(new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' }));
+}
+
+function download(blob: Blob, name: string) {
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = name;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+</script>
+
+<template>
+  <section
+    class="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:py-10"
+    :class="{ dark: chartTheme === 'dark' }"
+  >
+    <div class="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p class="text-sm font-semibold text-primary">{{ t('charts.eyebrow') }}</p>
+        <h1 class="mt-1 text-3xl font-semibold tracking-tight">{{ t('charts.title') }}</h1>
+        <p class="mt-2 max-w-2xl text-base text-muted-foreground">{{ t('charts.description') }}</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <div
+          class="flex rounded-lg border border-input bg-card p-1"
+          :aria-label="t('charts.displayMode')"
+        >
+          <button
+            v-for="mode in ['overview', 'standard', 'detail'] as const"
+            :key="mode"
+            type="button"
+            class="rounded p-2"
+            :class="displayMode === mode ? 'bg-accent text-foreground' : 'text-muted-foreground'"
+            :aria-label="t(`charts.modes.${mode}`)"
+            :title="t(`charts.modes.${mode}`)"
+            @click="displayMode = mode"
+          >
+            <Icon
+              :icon="
+                mode === 'overview'
+                  ? 'lucide:gallery-horizontal-end'
+                  : mode === 'standard'
+                    ? 'lucide:chart-no-axes-combined'
+                    : 'lucide:scan-search'
+              "
+              width="17"
+            />
