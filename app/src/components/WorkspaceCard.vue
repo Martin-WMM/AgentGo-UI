@@ -4,16 +4,21 @@ import { useI18n } from 'vue-i18n';
 
 import type { Workspace } from '../composables/useWorkspaces';
 
-defineProps<{
-  workspace: Workspace;
-  index: number;
-  deleting: boolean;
-}>();
+withDefaults(
+  defineProps<{
+    workspace: Workspace;
+    index: number;
+    deleting: boolean;
+    selected?: boolean;
+  }>(),
+  { selected: false },
+);
 
 const emit = defineEmits<{
   open: [];
   edit: [];
   remove: [];
+  toggle: [];
 }>();
 
 const { t } = useI18n();
@@ -21,7 +26,8 @@ const { t } = useI18n();
 
 <template>
   <article
-    class="workspace-card group relative flex min-h-52 flex-col overflow-hidden rounded-2xl border bg-background p-5 shadow-sm"
+    class="ag-card ag-rise group relative flex min-h-52 flex-col overflow-hidden rounded-2xl border p-5"
+    :class="selected ? 'ring-2 ring-primary' : ''"
     :style="{
       animationDelay: `${index * 75}ms`,
       borderColor: `color-mix(in srgb, ${workspace.color} 55%, transparent)`,
@@ -54,9 +60,20 @@ const { t } = useI18n();
         >
           <Icon icon="lucide:folder" width="22" height="22" aria-hidden="true" />
         </div>
-        <h2 class="truncate text-lg font-semibold">{{ workspace.name }}</h2>
+        <div class="min-w-0">
+          <h2 class="truncate text-lg font-semibold">{{ workspace.name }}</h2>
+          <p class="truncate text-sm text-muted-foreground">{{ workspace.groupName }}</p>
+        </div>
       </div>
       <div class="pointer-events-auto flex items-center gap-1">
+        <input
+          type="checkbox"
+          class="size-4 rounded border-input accent-primary"
+          :checked="selected"
+          :aria-label="t('selection.select', { name: workspace.name })"
+          @click.stop
+          @change="emit('toggle')"
+        />
         <button
           type="button"
           class="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
