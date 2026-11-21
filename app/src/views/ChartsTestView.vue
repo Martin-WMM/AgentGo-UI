@@ -448,3 +448,153 @@ function download(blob: Blob, name: string) {
             role="tablist"
             :aria-label="t('charts.type')"
           >
+            <button
+              v-for="type in chartTypes"
+              :key="type"
+              type="button"
+              class="rounded-md px-3 py-1.5 text-sm capitalize transition-colors"
+              :class="
+                chartType === type
+                  ? 'bg-card font-medium shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              "
+              :aria-selected="chartType === type"
+              @click="chartType = type"
+            >
+              {{ t(`charts.types.${type}`) }}
+            </button>
+          </div>
+        </div>
+        <div v-if="false" class="grid gap-4 sm:grid-cols-3">
+          <div class="rounded-xl border border-input/70 bg-muted/35 p-4">
+            <p class="text-sm text-muted-foreground">{{ t('charts.total') }}</p>
+            <p class="mt-1 text-2xl font-semibold">{{ total }}</p>
+          </div>
+          <div class="rounded-xl border border-input/70 bg-muted/35 p-4">
+            <p class="text-sm text-muted-foreground">{{ t('charts.average') }}</p>
+            <p class="mt-1 text-2xl font-semibold">{{ average }}</p>
+          </div>
+          <div class="rounded-xl border border-input/70 bg-muted/35 p-4">
+            <p class="text-sm text-muted-foreground">{{ t('charts.selected') }}</p>
+            <p class="mt-1 truncate text-2xl font-semibold">
+              {{ selected === null ? '—' : `${data[selected].label} · ${data[selected].value}` }}
+            </p>
+          </div>
+        </div>
+        <div
+          class="mt-5 rounded-xl border border-input/70"
+          :class="
+            displayMode === 'overview'
+              ? 'min-h-44'
+              : displayMode === 'detail'
+                ? 'min-h-[34rem]'
+                : 'min-h-80'
+          "
+          :style="{ backgroundColor: chartBackground, padding: `${padding}px` }"
+        >
+          <h2
+            v-if="displayMode !== 'overview'"
+            class="mb-2 font-semibold"
+            :class="[
+              fontSize === 'lg' ? 'text-2xl' : fontSize === 'sm' ? 'text-base' : 'text-xl',
+              titleAlign === 'left'
+                ? 'text-left'
+                : titleAlign === 'right'
+                  ? 'text-right'
+                  : 'text-center',
+            ]"
+            :style="{ color: titleColor }"
+          >
+            {{ title }}
+          </h2>
+          <p
+            v-if="showLegend && displayMode !== 'overview'"
+            class="mb-2 text-center text-xs text-muted-foreground"
+          >
+            <span
+              class="mr-1 inline-block size-2 rounded-full"
+              :style="{ backgroundColor: colors.primary }"
+            />{{ valueColumn
+            }}<template
+              v-if="
+                (chartType === 'line' || chartType === 'area' || chartType === 'bar') &&
+                compareData.length
+              "
+              ><span class="ml-4 mr-1 inline-block size-2 rounded-full bg-amber-500" />{{
+                compareColumn
+              }}</template
+            >
+          </p>
+          <div class="flex" :style="{ opacity: opacity / 100 }">
+            <div
+              v-if="usesCartesianAxes && displayMode !== 'overview'"
+              class="flex w-10 shrink-0 flex-col items-center justify-center gap-2 border-r border-input/70 pr-2 text-center text-xs text-muted-foreground"
+            >
+              <span class="font-medium text-foreground [writing-mode:vertical-rl]">{{
+                yAxisTitle
+              }}</span
+              ><span class="[writing-mode:vertical-rl]">{{ yAxisDescription }}</span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <ChartRenderer
+                :type="chartType"
+                :data="chartData"
+                :compare-data="compareData"
+                :colors="colors"
+                :show-grid="showGrid"
+                :show-labels="showLabels"
+                :smooth="smooth"
+                :stroke-width="strokeWidth"
+                :corner-radius="cornerRadius"
+                :horizontal="horizontal"
+                :selected-index="selected"
+                :compact="displayMode === 'overview'"
+                @select="selectPoint"
+              />
+            </div>
+          </div>
+          <div
+            v-if="usesCartesianAxes && displayMode !== 'overview'"
+            class="ml-10 flex items-end justify-center border-t border-input/70 pt-2 text-center text-xs text-muted-foreground"
+          >
+            <div>
+              <p class="font-medium text-foreground">{{ xAxisTitle }}</p>
+              <p>{{ xAxisDescription }}</p>
+            </div>
+          </div>
+          <div
+            v-if="displayMode === 'detail'"
+            class="mt-5 grid gap-3 border-t border-input/70 pt-4 sm:grid-cols-3"
+          >
+            <div class="rounded-lg bg-muted/45 p-3">
+              <p class="text-xs text-muted-foreground">{{ t('charts.total') }}</p>
+              <p class="text-xl font-semibold">{{ total }}</p>
+            </div>
+            <div class="rounded-lg bg-muted/45 p-3">
+              <p class="text-xs text-muted-foreground">{{ t('charts.average') }}</p>
+              <p class="text-xl font-semibold">{{ average }}</p>
+            </div>
+            <div class="rounded-lg bg-muted/45 p-3">
+              <p class="text-xs text-muted-foreground">{{ t('charts.selected') }}</p>
+              <p class="text-xl font-semibold">
+                {{ chartData[selected]?.label }} · {{ chartData[selected]?.value }}
+              </p>
+            </div>
+          </div>
+          <svg
+            v-if="false"
+            viewBox="0 0 700 290"
+            class="h-auto w-full"
+            role="img"
+            :aria-label="t('charts.preview')"
+          >
+            <g v-if="showGrid" stroke="currentColor" class="text-border" stroke-dasharray="4 5">
+              <line
+                v-for="step in 5"
+                :key="step"
+                x1="54"
+                :y1="28 + step * 40"
+                x2="646"
+                :y2="28 + step * 40"
+              />
+            </g>
