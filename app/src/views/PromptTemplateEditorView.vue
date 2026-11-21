@@ -148,3 +148,153 @@ async function saveTemplate() {
     description: form.description,
     engine: form.engine,
     content: form.content,
+    message: form.message,
+    tags: [...form.tags],
+    color: form.color,
+    icon: resolvedIcon.value,
+  };
+  try {
+    if (templateId.value) {
+      await updateTemplate(templateId.value, input);
+      toastSuccess(t('prompts.updated', { name: form.name.trim() }), t('toast.success'));
+    } else {
+      await createTemplate(input);
+      toastSuccess(t('prompts.created', { name: form.name.trim() }), t('toast.success'));
+    }
+    goBack();
+  } catch (caught) {
+    toastError(t(promptFailureI18n(caught)), t('toast.error'));
+  } finally {
+    saving.value = false;
+  }
+}
+</script>
+
+<template>
+  <section
+    class="flex w-full min-w-0 max-w-full flex-col px-4 py-4 sm:px-6 lg:h-[calc(100dvh-11.75rem)] lg:min-h-[calc(100dvh-11.75rem)]"
+  >
+    <div class="mb-4 flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex min-w-0 items-center gap-3">
+        <button
+          type="button"
+          class="rounded-xl border border-input p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          :aria-label="t('prompts.backToList')"
+          @click="goBack"
+        >
+          <Icon icon="lucide:arrow-left" width="18" height="18" aria-hidden="true" />
+        </button>
+        <div class="min-w-0">
+          <h1 class="truncate text-xl font-semibold tracking-tight sm:text-2xl">{{ pageTitle }}</h1>
+          <p class="mt-0.5 truncate text-sm text-muted-foreground">
+            {{ t('prompts.editorDescription') }}
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 self-end sm:self-auto">
+        <button type="button" class="ag-btn ag-btn-ghost" @click="goBack">
+          {{ t('prompts.cancel') }}
+        </button>
+        <button
+          type="button"
+          class="ag-btn text-white"
+          :style="{ backgroundColor: form.color }"
+          :disabled="!canSave || loading || loadFailed"
+          @click="saveTemplate"
+        >
+          <Icon icon="lucide:save" width="16" height="16" aria-hidden="true" />
+          {{ saving ? t('prompts.saving') : t('prompts.save') }}
+        </button>
+      </div>
+    </div>
+
+    <ContentSkeleton v-if="loading" kind="form" :label="t('prompts.loading')" />
+    <div
+      v-else-if="loadFailed"
+      class="rounded-2xl border border-dashed border-input px-6 py-16 text-center"
+    >
+      <h2 class="text-lg font-semibold">{{ t('prompts.notFound') }}</h2>
+      <button class="ag-btn ag-btn-info mt-5" type="button" @click="goBack">
+        {{ t('prompts.backToList') }}
+      </button>
+    </div>
+    <form
+      v-else
+      class="grid min-h-0 flex-1 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]"
+      @submit.prevent="saveTemplate"
+    >
+      <MarkdownEditor
+        v-model="form.content"
+        class="min-h-[32rem] lg:h-full lg:min-h-0"
+        :label="t('prompts.content')"
+        :placeholder="t('prompts.contentPlaceholder')"
+        :empty-text="t('prompts.markdownPreviewEmpty')"
+        highlight-placeholders
+      />
+
+      <aside class="min-h-0 space-y-4 overflow-y-auto rounded-2xl border border-input bg-card p-4">
+        <h2 class="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+          {{ t('prompts.basicInfo') }}
+        </h2>
+        <label class="block text-sm font-medium">
+          {{ t('prompts.name') }}
+          <input
+            v-model="form.name"
+            required
+            maxlength="255"
+            class="mt-1.5 w-full rounded-xl border border-input bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-ring"
+            :placeholder="t('prompts.namePlaceholder')"
+          />
+        </label>
+        <label class="block text-sm font-medium">
+          {{ t('prompts.group') }}
+          <input
+            v-model="form.groupName"
+            required
+            maxlength="255"
+            class="mt-1.5 w-full rounded-xl border border-input bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-ring"
+            :placeholder="t('prompts.groupPlaceholder')"
+          />
+        </label>
+        <label class="block text-sm font-medium">
+          {{ t('prompts.engine') }}
+          <select
+            v-model="form.engine"
+            class="mt-1.5 w-full rounded-xl border border-input bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option v-for="item in engines" :key="item" :value="item">
+              {{ t(`prompts.engines.${item}`) }}
+            </option>
+          </select>
+          <span class="mt-1.5 block text-xs font-normal text-muted-foreground">
+            {{ t(`prompts.engineHint.${form.engine}`) }}
+          </span>
+        </label>
+        <label class="block text-sm font-medium">
+          {{ t('prompts.descriptionLabel') }}
+          <textarea
+            v-model="form.description"
+            maxlength="2000"
+            rows="3"
+            class="mt-1.5 w-full resize-none rounded-xl border border-input bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-ring"
+            :placeholder="t('prompts.descriptionPlaceholder')"
+          />
+        </label>
+        <div>
+          <label class="block text-sm font-medium" for="prompt-tag-input">
+            {{ t('prompts.tags') }}
+          </label>
+          <TransitionGroup
+            v-if="form.tags.length"
+            name="ag-chip"
+            tag="div"
+            class="relative mt-2 flex flex-wrap gap-1.5"
+          >
+            <span
+              v-for="tag in form.tags"
+              :key="tag"
+              class="ag-tag"
+              :style="{ '--ag-tag': form.color }"
+            >
+              <span class="max-w-40 truncate">{{ tag }}</span>
+              <button
