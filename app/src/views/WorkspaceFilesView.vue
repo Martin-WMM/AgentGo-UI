@@ -6,23 +6,38 @@ import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
 import ConfirmActionDialog from '../components/ConfirmActionDialog.vue';
+import BatchDeleteBar from '../components/BatchDeleteBar.vue';
+import ContentSkeleton from '../components/ContentSkeleton.vue';
 import WorkspaceFileTable from '../components/WorkspaceFileTable.vue';
 import type { WorkspaceFile } from '../composables/useWorkspaces';
 import { uploadFailureI18n, useWorkspaces } from '../composables/useWorkspaces';
+import { useBatchSelection } from '../composables/useBatchSelection';
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
-const { getWorkspace, listFiles, uploadFile, deleteFile, downloadFile, removeWorkspace } =
-  useWorkspaces();
+const {
+  getWorkspace,
+  listFiles,
+  uploadFile,
+  deleteFile,
+  deleteFiles,
+  downloadFile,
+  removeWorkspace,
+} = useWorkspaces();
 const workspaceId = String(route.params.workspaceId);
 const workspace = computed(() => getWorkspace(workspaceId));
 const files = ref<WorkspaceFile[]>([]);
+const visiblePaths = computed(() => files.value.map((file) => file.path));
+const { selectedIds, toggle, toggleAll, clear, allSelected, count } =
+  useBatchSelection(visiblePaths);
 const loading = ref(true);
 const busy = ref(false);
 const input = ref<HTMLInputElement | null>(null);
 const fileToDelete = ref<WorkspaceFile | null>(null);
 const deleteWorkspaceOpen = ref(false);
+const batchDeleteOpen = ref(false);
+const batchDeleting = ref(false);
 
 async function refresh() {
   loading.value = true;
@@ -68,6 +83,25 @@ async function confirmDeleteFile() {
   }
 }
 
+async function confirmBatchDelete() {
+  const paths = [...selectedIds.value];
+  if (!paths.length) return;
+  batchDeleting.value = true;
+  busy.value = true;
+  try {
+    await deleteFiles(paths);
+    clear();
+    batchDeleteOpen.value = false;
+    await refresh();
+    toastSuccess(t('selection.deleted', { count: paths.length }), t('toast.success'));
+  } catch {
+    toastError(t('files.deleteError'), t('toast.error'));
+  } finally {
+    batchDeleting.value = false;
+    busy.value = false;
+  }
+}
+
 async function onDownload(path: string) {
   try {
     await downloadFile(path);
@@ -92,10 +126,7 @@ onMounted(refresh);
 </script>
 
 <template>
-  <section
-    v-if="workspace"
-    class="mx-auto min-h-[calc(100vh-129px)] w-full max-w-6xl px-4 py-10 sm:px-6"
-  >
+  <section v-if="workspace" class="ag-page">
     <button
       type="button"
       class="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
@@ -127,9 +158,7 @@ onMounted(refresh);
         </div>
       </div>
       <div class="flex flex-wrap gap-2">
-        <label
-          class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
-        >
+        <label class="ag-btn ag-btn-primary cursor-pointer">
           <Icon icon="lucide:upload" width="17" height="17" aria-hidden="true" />{{
             busy ? t('files.uploading') : t('files.upload')
           }}
@@ -137,7 +166,7 @@ onMounted(refresh);
         </label>
         <button
           type="button"
-          class="rounded-lg border border-input px-3 py-2.5 text-sm text-destructive hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+          class="ag-btn ag-btn-warning"
           :disabled="files.length > 0 || loading"
           @click="deleteWorkspaceOpen = true"
         >
@@ -145,26 +174,35 @@ onMounted(refresh);
         </button>
       </div>
     </div>
+    <BatchDeleteBar
+      v-if="!loading && files.length"
+      :count="count"
+      :total="files.length"
+      :all-selected="allSelected"
+      :deleting="batchDeleting || busy"
+      @toggle-all="toggleAll"
+      @remove="batchDeleteOpen = true"
+    />
     <p v-if="files.length" class="mb-4 text-sm text-muted-foreground">
       {{ t('files.fileCount', { count: files.length }) }}
     </p>
-    <div v-if="loading" class="py-16 text-center text-sm text-muted-foreground">
-      {{ t('files.loading') }}
-    </div>
+    <ContentSkeleton v-if="loading" kind="table" :count="4" :label="t('files.loading')" />
     <WorkspaceFileTable
       v-else-if="files.length"
       :files="files"
       :busy="busy"
+      :selected-paths="selectedIds"
       @download="onDownload"
       @remove="fileToDelete = $event"
+      @toggle="toggle"
     />
     <div v-else class="rounded-2xl border border-dashed border-input px-6 py-16 text-center">
       <h2 class="text-lg font-semibold">{{ t('files.emptyFilesTitle') }}</h2>
       <p class="mt-2 text-sm text-muted-foreground">{{ t('files.emptyFilesDescription') }}</p>
     </div>
   </section>
-  <section v-else class="mx-auto flex min-h-[calc(100vh-129px)] w-full max-w-3xl items-center px-4">
-    <div class="rounded-2xl border border-input p-8">
+  <section v-else class="ag-page ag-page--center">
+    <div class="w-full min-w-0 rounded-2xl border border-input p-8">
       <h1 class="text-xl font-semibold">{{ t('files.notFound') }}</h1>
       <button
         type="button"
@@ -182,6 +220,14 @@ onMounted(refresh);
     :confirm-label="t('files.delete')"
     @update:open="fileToDelete = $event ? fileToDelete : null"
     @confirm="confirmDeleteFile"
+  />
+  <ConfirmActionDialog
+    :open="batchDeleteOpen"
+    :title="t('selection.deleteSelected')"
+    :description="t('selection.confirmDelete', { count })"
+    :confirm-label="t('selection.deleteSelected')"
+    @update:open="batchDeleteOpen = $event"
+    @confirm="confirmBatchDelete"
   />
   <ConfirmActionDialog
     v-model:open="deleteWorkspaceOpen"
