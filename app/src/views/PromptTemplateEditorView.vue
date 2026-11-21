@@ -298,3 +298,92 @@ async function saveTemplate() {
             >
               <span class="max-w-40 truncate">{{ tag }}</span>
               <button
+                type="button"
+                class="rounded-full p-0.5 transition-transform hover:scale-110"
+                :aria-label="t('prompts.removeTag', { tag })"
+                @click="removeTag(tag)"
+              >
+                <Icon icon="lucide:x" width="12" height="12" aria-hidden="true" />
+              </button>
+            </span>
+          </TransitionGroup>
+          <input
+            id="prompt-tag-input"
+            v-model="tagDraft"
+            maxlength="32"
+            class="mt-1.5 w-full rounded-xl border border-input bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-ring"
+            :placeholder="t('prompts.tagsPlaceholder')"
+            @keydown.enter.prevent="addTag"
+            @keydown.,.prevent="addTag"
+            @blur="addTag"
+          />
+          <p class="mt-1.5 text-xs text-muted-foreground">{{ t('prompts.tagsHint') }}</p>
+          <p v-if="tagError" class="mt-1 text-xs text-destructive">{{ tagError }}</p>
+        </div>
+        <ColorSwatchPicker v-model="form.color" :legend="t('prompts.color')" name="prompt-color" />
+        <div>
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-sm font-medium">{{ t('prompts.icon') }}</span>
+            <ResourceIcon v-if="resolvedIcon" :icon="resolvedIcon" :size="18" />
+          </div>
+          <div class="mt-2 flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              class="rounded-lg border px-2.5 py-1.5 text-xs"
+              :class="
+                form.icon.trim()
+                  ? 'border-input text-muted-foreground hover:bg-accent'
+                  : 'border-primary bg-primary/10 text-foreground'
+              "
+              :aria-pressed="!form.icon.trim()"
+              @click="form.icon = ''"
+            >
+              {{ t('prompts.iconNone') }}
+            </button>
+            <button
+              v-for="iconId in promptIcons"
+              :key="iconId"
+              type="button"
+              class="flex size-8 items-center justify-center rounded-lg border"
+              :class="
+                form.icon.trim() === iconId
+                  ? 'border-primary bg-primary/10 text-foreground'
+                  : 'border-input text-muted-foreground hover:bg-accent hover:text-foreground'
+              "
+              :aria-pressed="form.icon.trim() === iconId"
+              :aria-label="iconId"
+              @click="form.icon = iconId"
+            >
+              <Icon :icon="iconId" width="16" height="16" aria-hidden="true" />
+            </button>
+          </div>
+          <input
+            v-model="form.icon"
+            maxlength="2048"
+            class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-ring"
+            :placeholder="t('prompts.iconPlaceholder')"
+            :aria-invalid="iconInvalid"
+          />
+          <p class="mt-1.5 text-xs text-muted-foreground">{{ t('prompts.iconHint') }}</p>
+          <p v-if="iconInvalid" class="mt-1 text-xs text-destructive">
+            {{ t('prompts.iconInvalid') }}
+          </p>
+        </div>
+        <label class="block text-sm font-medium">
+          {{ t('prompts.message') }}
+          <textarea
+            v-model="form.message"
+            :required="!isCreate"
+            maxlength="2000"
+            rows="2"
+            class="mt-1.5 w-full resize-none rounded-xl border border-input bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-ring"
+            :placeholder="t('prompts.messagePlaceholder')"
+          />
+          <span class="mt-1.5 block text-xs font-normal text-muted-foreground">
+            {{ t(isCreate ? 'prompts.messageHintCreate' : 'prompts.messageHintEdit') }}
+          </span>
+        </label>
+      </aside>
+    </form>
+  </section>
+</template>
