@@ -5,6 +5,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import { apiRequest } from '../api/fileRequest';
+import ContentSkeleton from '../components/ContentSkeleton.vue';
 import SystemSettingsPanel from '../components/SystemSettingsPanel.vue';
 import { useAuthenticatedImage } from '../composables/useAuthenticatedImage';
 import { backendBaseUrl, useAuthStore } from '../stores/auth';
@@ -141,7 +142,7 @@ async function saveProfile() {
 </script>
 
 <template>
-  <section class="mx-auto min-h-[calc(100vh-129px)] w-full max-w-3xl px-4 py-12 sm:px-6">
+  <section class="ag-page">
     <div class="mb-8 flex items-start gap-4">
       <div class="flex size-11 items-center justify-center rounded-xl bg-accent text-primary">
         <Icon icon="lucide:sliders-horizontal" width="22" height="22" aria-hidden="true" />
@@ -162,11 +163,11 @@ async function saveProfile() {
           <p class="mt-1 text-sm text-muted-foreground">{{ t('profile.description') }}</p>
         </div>
 
-        <div v-if="loading" class="text-sm text-muted-foreground">{{ t('profile.loading') }}</div>
+        <ContentSkeleton v-if="loading" kind="form" :label="t('profile.loading')" />
         <div v-else class="space-y-8">
           <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
             <span
-              class="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-lg font-bold text-white"
+              class="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-info text-lg font-bold text-primary-foreground shadow-sm"
             >
               <img v-if="displayUrl" :src="displayUrl" alt="" class="size-full object-cover" />
               <span v-else>{{ initials }}</span>
@@ -229,7 +230,7 @@ async function saveProfile() {
               />
               <p class="text-xs text-muted-foreground">{{ t('profile.usernameHint') }}</p>
             </div>
-            <div class="grid gap-5 sm:grid-cols-2">
+            <div class="ag-field-grid">
               <div class="space-y-2">
                 <label for="profile-display-name" class="text-sm font-medium">{{
                   t('profile.displayName')
@@ -262,7 +263,7 @@ async function saveProfile() {
               <h3 class="text-base font-semibold">{{ t('profile.personal') }}</h3>
               <p class="mt-1 text-sm text-muted-foreground">{{ t('profile.personalHint') }}</p>
             </div>
-            <div class="grid gap-5 sm:grid-cols-2">
+            <div class="ag-field-grid">
               <div class="space-y-2">
                 <label for="profile-phone" class="text-sm font-medium">{{
                   t('profile.phone')
@@ -334,7 +335,7 @@ async function saveProfile() {
                   :placeholder="t('profile.timezonePlaceholder')"
                 />
               </div>
-              <div class="space-y-2 sm:col-span-2">
+              <div class="space-y-2">
                 <label for="profile-language" class="text-sm font-medium">{{
                   t('profile.language')
                 }}</label>
@@ -361,11 +362,7 @@ async function saveProfile() {
             </div>
           </section>
 
-          <button
-            type="submit"
-            :disabled="saving"
-            class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
+          <button type="submit" :disabled="saving" class="ag-btn ag-btn-success">
             {{ saving ? t('profile.saving') : t('profile.save') }}
           </button>
         </div>
