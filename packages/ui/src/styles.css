@@ -898,3 +898,25 @@ pre.ag-json-source.hljs {
   border-color: var(--ring);
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 35%, transparent);
 }
+
+.ag-json-source .hljs-punctuation,
+.ag-json-view .hljs-punctuation {
+  color: color-mix(in oklab, var(--foreground) 70%, var(--muted-foreground));
+}
+
+.ag-json-source .hljs-attr,
+.ag-json-view .hljs-attr {
+  color: var(--primary);
+}
+
+.ag-json-source .hljs-string,
+.ag-json-view .hljs-string {
+  color: var(--success);
+}
+
+.ag-json-source .hljs-number,
+.ag-json-source .hljs-literal,
+.ag-json-view .hljs-number,
+.ag-json-view .hljs-literal {
+  color: var(--info);
+}
