@@ -148,3 +148,56 @@ async function confirmBatchDelete() {
     <div
       v-else-if="loadFailed"
       class="rounded-2xl border border-dashed border-input px-6 py-16 text-center"
+    >
+      <h2 class="text-lg font-semibold">{{ t('a2a.loadError') }}</h2>
+      <button class="ag-btn ag-btn-info mt-5" type="button" @click="reload">
+        {{ t('a2a.retry') }}
+      </button>
+    </div>
+    <div v-else-if="visibleAgents.length" class="ag-card-grid">
+      <A2aAgentCard
+        v-for="(agent, index) in visibleAgents"
+        :key="agent.id"
+        :agent="agent"
+        :index="index"
+        :deleting="deletingAgentId === agent.id"
+        :selected="selectedIds.includes(agent.id)"
+        @edit="openEdit(agent)"
+        @remove="agentToDelete = agent"
+        @toggle="toggle(agent.id)"
+      />
+    </div>
+    <div v-else class="rounded-2xl border border-dashed border-input px-6 py-16 text-center">
+      <h2 class="text-lg font-semibold">
+        {{ statusFilter === 'ALL' ? t('a2a.emptyTitle') : t('a2a.emptyFilteredTitle') }}
+      </h2>
+      <p class="mt-2 text-sm text-muted-foreground">
+        {{
+          statusFilter === 'ALL'
+            ? t('a2a.emptyDescription')
+            : t('a2a.emptyFilteredDescription', { status: t(`a2a.statuses.${statusFilter}`) })
+        }}
+      </p>
+      <button class="ag-btn ag-btn-primary mt-5" type="button" @click="openCreate">
+        {{ t('a2a.createAgent') }}
+      </button>
+    </div>
+
+    <ConfirmActionDialog
+      :open="Boolean(agentToDelete)"
+      :title="t('a2a.delete')"
+      :description="t('a2a.confirmDelete', { name: agentToDelete?.name ?? '' })"
+      :confirm-label="t('a2a.delete')"
+      @update:open="agentToDelete = $event ? agentToDelete : null"
+      @confirm="confirmDelete"
+    />
+    <ConfirmActionDialog
+      :open="batchDeleteOpen"
+      :title="t('selection.deleteSelected')"
+      :description="t('selection.confirmDelete', { count })"
+      :confirm-label="t('selection.deleteSelected')"
+      @update:open="batchDeleteOpen = $event"
+      @confirm="confirmBatchDelete"
+    />
+  </section>
+</template>
