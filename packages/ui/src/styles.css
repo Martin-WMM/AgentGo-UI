@@ -748,3 +748,153 @@ html.reduce-motion *::after {
 }
 
 .ag-chip-enter-from {
+  opacity: 0;
+  transform: translateY(6px) scale(0.86);
+}
+
+.ag-chip-leave-to {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.ag-chip-move {
+  transition: transform 220ms ease;
+}
+
+@keyframes ag-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ag-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes ag-drawer {
+  from {
+    transform: translateX(-105%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ag-rise,
+  .ag-skeleton-card,
+  .ag-skeleton-row,
+  .ag-skeleton::after,
+  .ag-sidebar--drawer {
+    animation: none;
+  }
+}
+
+.ag-md-source .ag-placeholder,
+.ag-json-source .ag-placeholder {
+  color: color-mix(in oklab, var(--color-muted-foreground) 70%, transparent);
+}
+
+.ag-md-source mark.ag-token {
+  color: var(--color-primary);
+  background: color-mix(in oklab, var(--color-primary) 18%, transparent);
+  border-radius: 0.25rem;
+}
+
+.ag-md-source .ag-md-heading {
+  color: color-mix(in oklab, var(--color-foreground) 88%, var(--color-primary));
+  font-weight: 600;
+}
+
+.ag-md-source .ag-md-inline-code,
+.ag-json-source .hljs-string,
+.ag-json-view .hljs-string {
+  border-radius: 0.2rem;
+}
+
+.ag-md-source .ag-md-inline-code {
+  color: color-mix(in oklab, var(--color-foreground) 70%, var(--success));
+  background: color-mix(in oklab, var(--success) 12%, transparent);
+}
+
+.ag-md-source .ag-md-strong {
+  font-weight: 700;
+}
+
+.ag-md-preview .ag-md-pre,
+.ag-json-view {
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  background: transparent;
+}
+
+.ag-md-preview .ag-md-pre {
+  border: 1px solid color-mix(in oklab, var(--color-input) 80%, transparent);
+  background: color-mix(in oklab, var(--color-accent) 55%, transparent);
+  padding: 0.85rem 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.ag-md-preview code:not(.hljs) {
+  border-radius: 0.35rem;
+  background: color-mix(in oklab, var(--color-accent) 70%, transparent);
+  padding: 0.1rem 0.35rem;
+  font-size: 0.85em;
+}
+
+.ag-md-preview h1,
+.ag-md-preview h2,
+.ag-md-preview h3 {
+  margin-top: 1.1em;
+  margin-bottom: 0.45em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.ag-md-preview p,
+.ag-md-preview ul,
+.ag-md-preview ol {
+  margin: 0.65em 0;
+}
+
+pre.ag-json-source,
+.ag-json-view {
+  background-color: transparent;
+  color: var(--foreground);
+}
+
+.ag-md-preview .hljs,
+.ag-json-view .hljs,
+pre.ag-json-source.hljs {
+  background-color: transparent;
+  color: var(--foreground);
+  padding: 0;
+}
+
+.ag-json-input {
+  background-color: transparent;
+  color: transparent;
+  caret-color: var(--foreground);
+  color-scheme: light;
+}
+
+.dark .ag-json-input {
+  color-scheme: dark;
+}
+
+.ag-json-input::selection {
+  background: color-mix(in oklab, var(--primary) 32%, transparent);
+}
+
+.ag-json-editor:focus-within {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 35%, transparent);
+}
