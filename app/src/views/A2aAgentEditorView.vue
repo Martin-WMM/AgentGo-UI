@@ -298,3 +298,9 @@ async function saveAgent() {
         v-model="form.metadata"
         :label="t('a2a.metadata')"
         placeholder='{"team":"ops"}'
+        expect="object"
+      />
+      <p class="text-xs text-muted-foreground">{{ t('a2a.metadataHint') }}</p>
+    </form>
+  </section>
+</template>
