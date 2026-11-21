@@ -1,44 +1,41 @@
 <script setup lang="ts">
 import { toastError, toastSuccess } from '@agentgo/ui';
 import { Icon } from '@iconify/vue';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 
 import ConfirmActionDialog from '../components/ConfirmActionDialog.vue';
+import BatchDeleteBar from '../components/BatchDeleteBar.vue';
+import ContentSkeleton from '../components/ContentSkeleton.vue';
 import ModelCard from '../components/ModelCard.vue';
-import ModelFormDialog from '../components/ModelFormDialog.vue';
 import type { ManagedModel, ModelType } from '../composables/useModels';
 import { modelFailureI18n, modelTypes, useModels } from '../composables/useModels';
+import { useBatchSelection } from '../composables/useBatchSelection';
 
 type TypeFilter = ModelType | 'ALL';
 
 const filters: TypeFilter[] = ['ALL', ...modelTypes];
 
 const { t } = useI18n();
-const { models, refreshModels, createModel, updateModel, removeModel } = useModels();
+const router = useRouter();
+const { models, refreshModels, removeModel, removeModels } = useModels();
 
 const typeFilter = ref<TypeFilter>('ALL');
-const dialogOpen = ref(false);
-const editing = ref<ManagedModel | null>(null);
 const modelToDelete = ref<ManagedModel | null>(null);
 const deletingModelId = ref<string | null>(null);
-const saving = ref(false);
 const loading = ref(false);
 const loadFailed = ref(false);
-const form = reactive({
-  name: '',
-  provider: '',
-  type: 'LLM' as ModelType,
-  description: '',
-  configuration: '{}',
-});
 
 const visibleModels = computed(() =>
   typeFilter.value === 'ALL'
     ? models.value
     : models.value.filter((model) => model.type === typeFilter.value),
 );
-const dialogTitle = computed(() => t(editing.value ? 'models.editModel' : 'models.createModel'));
+const visibleIds = computed(() => visibleModels.value.map((model) => model.id));
+const { selectedIds, toggle, toggleAll, clear, allSelected, count } = useBatchSelection(visibleIds);
+const batchDeleteOpen = ref(false);
+const batchDeleting = ref(false);
 
 onMounted(() => {
   void reload();
@@ -57,66 +54,15 @@ async function reload() {
   }
 }
 
-function resetForm(model?: ManagedModel | null) {
-  editing.value = model ?? null;
-  form.name = model?.name ?? '';
-  form.provider = model?.provider ?? '';
-  form.type = model?.type ?? (typeFilter.value === 'ALL' ? 'LLM' : typeFilter.value);
-  form.description = model?.description ?? '';
-  form.configuration = JSON.stringify(model?.configuration ?? {}, null, 2);
-}
-
 function openCreate() {
-  resetForm(null);
-  dialogOpen.value = true;
+  void router.push({
+    name: 'model-create',
+    query: typeFilter.value === 'ALL' ? {} : { type: typeFilter.value },
+  });
 }
 
 function openEdit(model: ManagedModel) {
-  resetForm(model);
-  dialogOpen.value = true;
-}
-
-function parseConfiguration(): Record<string, unknown> | null {
-  const raw = form.configuration.trim() || '{}';
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
-    return parsed as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-async function saveModel() {
-  if (!form.name.trim() || !form.provider.trim() || saving.value) return;
-  const configuration = parseConfiguration();
-  if (!configuration) {
-    toastError(t('models.configurationInvalid'), t('toast.error'));
-    return;
-  }
-  saving.value = true;
-  const input = {
-    name: form.name,
-    provider: form.provider,
-    type: form.type,
-    description: form.description,
-    configuration,
-  };
-  try {
-    if (editing.value) {
-      await updateModel(editing.value.id, input);
-      toastSuccess(t('models.updated', { name: form.name.trim() }), t('toast.success'));
-    } else {
-      await createModel(input);
-      toastSuccess(t('models.created', { name: form.name.trim() }), t('toast.success'));
-    }
-    if (typeFilter.value !== 'ALL') typeFilter.value = form.type;
-    dialogOpen.value = false;
-  } catch (caught) {
-    toastError(t(modelFailureI18n(caught)), t('toast.error'));
-  } finally {
-    saving.value = false;
-  }
+  void router.push({ name: 'model-edit', params: { id: model.id } });
 }
 
 async function confirmDelete() {
@@ -132,12 +78,28 @@ async function confirmDelete() {
     deletingModelId.value = null;
   }
 }
+
+async function confirmBatchDelete() {
+  const ids = [...selectedIds.value];
+  if (!ids.length) return;
+  batchDeleting.value = true;
+  try {
+    await removeModels(ids);
+    clear();
+    batchDeleteOpen.value = false;
+    toastSuccess(t('selection.deleted', { count: ids.length }), t('toast.success'));
+  } catch (caught) {
+    toastError(t(modelFailureI18n(caught)), t('toast.error'));
+  } finally {
+    batchDeleting.value = false;
+  }
+}
 </script>
 
 <template>
-  <section class="mx-auto min-h-[calc(100vh-129px)] w-full max-w-6xl px-4 py-10 sm:px-6">
+  <section class="ag-page">
     <div
-      class="relative mb-8 flex flex-col gap-4 overflow-hidden rounded-3xl border border-primary/10 bg-gradient-to-br from-primary/10 via-background to-cyan-400/10 p-6 sm:flex-row sm:items-end sm:justify-between"
+      class="ag-hero relative mb-8 flex flex-col gap-4 overflow-hidden rounded-3xl p-6 sm:flex-row sm:items-end sm:justify-between"
     >
       <div class="flex items-start gap-4">
         <div
@@ -150,11 +112,7 @@ async function confirmDelete() {
           <p class="mt-2 text-muted-foreground">{{ t('models.description') }}</p>
         </div>
       </div>
-      <button
-        class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/20"
-        type="button"
-        @click="openCreate"
-      >
+      <button class="ag-btn ag-btn-primary" type="button" @click="openCreate">
         <Icon icon="lucide:plus" width="18" height="18" aria-hidden="true" />
         {{ t('models.createModel') }}
       </button>
@@ -166,7 +124,7 @@ async function confirmDelete() {
         :key="item"
         type="button"
         role="tab"
-        class="rounded-full border px-3 py-1.5 text-sm font-medium"
+        class="ag-chip rounded-full border px-3 py-1.5 text-sm font-medium"
         :class="
           item === typeFilter
             ? 'border-primary bg-primary text-primary-foreground'
@@ -179,29 +137,37 @@ async function confirmDelete() {
       </button>
     </div>
 
-    <p v-if="loading" class="text-sm text-muted-foreground">{{ t('models.loading') }}</p>
+    <BatchDeleteBar
+      v-if="!loading && !loadFailed"
+      :count="count"
+      :total="visibleModels.length"
+      :all-selected="allSelected"
+      :deleting="batchDeleting"
+      @toggle-all="toggleAll"
+      @remove="batchDeleteOpen = true"
+    />
+
+    <ContentSkeleton v-if="loading" kind="cards" :label="t('models.loading')" />
     <div
       v-else-if="loadFailed"
       class="rounded-2xl border border-dashed border-input px-6 py-16 text-center"
     >
       <h2 class="text-lg font-semibold">{{ t('models.loadError') }}</h2>
-      <button
-        class="mt-5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        type="button"
-        @click="reload"
-      >
+      <button class="ag-btn ag-btn-info mt-5" type="button" @click="reload">
         {{ t('models.retry') }}
       </button>
     </div>
-    <div v-else-if="visibleModels.length" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div v-else-if="visibleModels.length" class="ag-card-grid">
       <ModelCard
         v-for="(model, index) in visibleModels"
         :key="model.id"
         :model="model"
         :index="index"
         :deleting="deletingModelId === model.id"
+        :selected="selectedIds.includes(model.id)"
         @edit="openEdit(model)"
         @remove="modelToDelete = model"
+        @toggle="toggle(model.id)"
       />
     </div>
     <div v-else class="rounded-2xl border border-dashed border-input px-6 py-16 text-center">
@@ -215,26 +181,11 @@ async function confirmDelete() {
             : t('models.emptyFilteredDescription', { type: t(`models.types.${typeFilter}`) })
         }}
       </p>
-      <button
-        class="mt-5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        type="button"
-        @click="openCreate"
-      >
+      <button class="ag-btn ag-btn-primary mt-5" type="button" @click="openCreate">
         {{ t('models.createModel') }}
       </button>
     </div>
 
-    <ModelFormDialog
-      v-model:open="dialogOpen"
-      v-model:name="form.name"
-      v-model:provider="form.provider"
-      v-model:type="form.type"
-      v-model:description="form.description"
-      v-model:configuration="form.configuration"
-      :title="dialogTitle"
-      :saving="saving"
-      @save="saveModel"
-    />
     <ConfirmActionDialog
       :open="Boolean(modelToDelete)"
       :title="t('models.delete')"
@@ -242,6 +193,14 @@ async function confirmDelete() {
       :confirm-label="t('models.delete')"
       @update:open="modelToDelete = $event ? modelToDelete : null"
       @confirm="confirmDelete"
+    />
+    <ConfirmActionDialog
+      :open="batchDeleteOpen"
+      :title="t('selection.deleteSelected')"
+      :description="t('selection.confirmDelete', { count })"
+      :confirm-label="t('selection.deleteSelected')"
+      @update:open="batchDeleteOpen = $event"
+      @confirm="confirmBatchDelete"
     />
   </section>
 </template>
