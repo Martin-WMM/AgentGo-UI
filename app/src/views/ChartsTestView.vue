@@ -298,3 +298,153 @@ function download(blob: Blob, name: string) {
               "
               width="17"
             />
+          </button>
+        </div>
+        <button
+          class="ag-btn ag-btn-outline ag-btn-icon"
+          type="button"
+          :aria-label="t('charts.exportImage')"
+          :title="t('charts.exportImage')"
+          @click="exportImage()"
+        >
+          <Icon icon="lucide:image-down" width="17" />
+        </button>
+        <button
+          class="ag-btn ag-btn-primary ag-btn-icon"
+          type="button"
+          :aria-label="t('charts.configure')"
+          :title="t('charts.configure')"
+          @click="showConfig = true"
+        >
+          <Icon icon="lucide:sliders-horizontal" width="17" />
+        </button>
+        <div class="relative">
+          <button
+            class="ag-btn ag-btn-outline ag-btn-icon"
+            type="button"
+            :aria-label="t('charts.moreActions')"
+            :title="t('charts.moreActions')"
+            :aria-expanded="showMoreActions"
+            @click="showMoreActions = !showMoreActions"
+          >
+            <Icon icon="lucide:ellipsis" width="18" />
+          </button>
+          <div
+            v-if="showMoreActions"
+            class="absolute right-0 z-30 mt-2 flex w-max gap-1 rounded-lg border border-input bg-card p-1 shadow-lg"
+          >
+            <button
+              class="rounded p-2 hover:bg-accent"
+              type="button"
+              :aria-label="t('charts.viewData')"
+              :title="t('charts.viewData')"
+              @click="
+                showData = true;
+                showMoreActions = false;
+              "
+            >
+              <Icon icon="lucide:table-2" width="17" /></button
+            ><button
+              class="rounded p-2 hover:bg-accent"
+              type="button"
+              aria-label="Export CSV"
+              title="Export CSV"
+              @click="
+                exportData('csv');
+                showMoreActions = false;
+              "
+            >
+              <Icon icon="lucide:file-text" width="17" /></button
+            ><button
+              class="rounded p-2 hover:bg-accent"
+              type="button"
+              aria-label="Export JSON"
+              title="Export JSON"
+              @click="
+                exportData('json');
+                showMoreActions = false;
+              "
+            >
+              <Icon icon="lucide:braces" width="17" /></button
+            ><button
+              class="rounded p-2 hover:bg-accent"
+              type="button"
+              aria-label="Export Excel"
+              title="Export Excel"
+              @click="
+                exportData('excel');
+                showMoreActions = false;
+              "
+            >
+              <Icon icon="lucide:sheet" width="17" /></button
+            ><button
+              class="rounded p-2 hover:bg-accent"
+              type="button"
+              aria-label="Export PNG"
+              title="Export PNG"
+              @click="
+                exportImage('png');
+                showMoreActions = false;
+              "
+            >
+              <Icon icon="lucide:image" width="17" /></button
+            ><button
+              class="rounded p-2 hover:bg-accent"
+              type="button"
+              aria-label="Export JPEG"
+              title="Export JPEG"
+              @click="
+                exportImage('jpeg');
+                showMoreActions = false;
+              "
+            >
+              <Icon icon="lucide:camera" width="17" /></button
+            ><button
+              class="rounded p-2 hover:bg-accent"
+              type="button"
+              aria-label="Export SVG"
+              title="Export SVG"
+              @click="
+                exportImage('svg');
+                showMoreActions = false;
+              "
+            >
+              <Icon icon="lucide:vector-square" width="17" /></button
+            ><button
+              class="rounded p-2 hover:bg-accent"
+              type="button"
+              :aria-label="t('charts.light')"
+              :title="t('charts.light')"
+              @click="setChartTheme('light')"
+            >
+              <Icon icon="lucide:sun" width="17" /></button
+            ><button
+              class="rounded p-2 hover:bg-accent"
+              type="button"
+              :aria-label="t('charts.dark')"
+              :title="t('charts.dark')"
+              @click="setChartTheme('dark')"
+            >
+              <Icon icon="lucide:moon" width="17" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div
+        ref="chartEl"
+        class="rounded-2xl border border-input bg-card shadow-sm"
+        :class="displayMode === 'overview' ? 'max-w-md p-3' : 'p-4 sm:p-6'"
+      >
+        <div v-if="false" class="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="font-semibold">{{ t('charts.preview') }}</h2>
+            <p class="text-sm text-muted-foreground">{{ t('charts.interactionHint') }}</p>
+          </div>
+          <div
+            class="flex gap-1 rounded-lg bg-muted p-1"
+            role="tablist"
+            :aria-label="t('charts.type')"
+          >
