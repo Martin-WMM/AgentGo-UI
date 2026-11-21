@@ -748,3 +748,153 @@ function download(blob: Blob, name: string) {
               </select></label
             ><label class="flex cursor-pointer items-center justify-between gap-3 text-sm"
               ><span>{{ t('charts.showGrid') }}</span
+              ><input v-model="showGrid" type="checkbox" class="size-4 accent-primary" /></label
+            ><label class="flex cursor-pointer items-center justify-between gap-3 text-sm"
+              ><span>{{ t('charts.showLabels') }}</span
+              ><input v-model="showLabels" type="checkbox" class="size-4 accent-primary" /></label
+            ><label class="flex cursor-pointer items-center justify-between gap-3 text-sm"
+              ><span>{{ t('charts.smooth') }}</span
+              ><input v-model="smooth" type="checkbox" class="size-4 accent-primary"
+            /></label>
+          </div>
+        </div>
+        <div class="rounded-2xl border border-input bg-card p-5">
+          <div class="flex items-center justify-between">
+            <h2 class="font-semibold">{{ t('charts.data') }}</h2>
+            <span class="text-xs text-muted-foreground">0–100</span>
+          </div>
+          <div class="mt-4 space-y-3">
+            <label
+              v-for="(point, index) in data"
+              :key="point.label"
+              class="grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 text-sm"
+              ><span class="text-muted-foreground">{{ point.label }}</span
+              ><input
+                :value="point.value"
+                type="range"
+                min="0"
+                max="100"
+                class="w-full accent-primary"
+                @input="setPointValue(index, $event)"
+              /><output class="text-right font-medium">{{ point.value }}</output></label
+            >
+          </div>
+        </div>
+      </aside>
+    </div>
+    <section
+      v-if="false"
+      class="mt-10 rounded-2xl border border-input bg-card p-5"
+      aria-label="Advanced chart style configuration"
+    >
+      <h2 class="font-semibold">{{ t('charts.advancedStyle') }}</h2>
+      <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <label class="text-sm font-medium"
+          >{{ t('charts.lineWidth')
+          }}<input
+            v-model.number="strokeWidth"
+            type="range"
+            min="1"
+            max="12"
+            class="mt-2 w-full accent-primary"
+          /><span class="text-xs text-muted-foreground">{{ strokeWidth }} px</span></label
+        ><label class="text-sm font-medium"
+          >{{ t('charts.opacity')
+          }}<input
+            v-model.number="opacity"
+            type="range"
+            min="10"
+            max="100"
+            class="mt-2 w-full accent-primary"
+          /><span class="text-xs text-muted-foreground">{{ opacity }}%</span></label
+        ><label class="text-sm font-medium"
+          >{{ t('charts.cornerRadius')
+          }}<input
+            v-model.number="cornerRadius"
+            type="range"
+            min="0"
+            max="24"
+            class="mt-2 w-full accent-primary"
+          /><span class="text-xs text-muted-foreground">{{ cornerRadius }} px</span></label
+        ><label class="text-sm font-medium"
+          >{{ t('charts.padding')
+          }}<input
+            v-model.number="padding"
+            type="range"
+            min="0"
+            max="48"
+            class="mt-2 w-full accent-primary"
+          /><span class="text-xs text-muted-foreground">{{ padding }} px</span></label
+        ><label class="text-sm font-medium"
+          >{{ t('charts.chartBackground')
+          }}<input v-model="chartBackground" type="color" class="ml-2 size-8 align-middle" /></label
+        ><label class="text-sm font-medium"
+          >{{ t('charts.titleColor')
+          }}<input v-model="titleColor" type="color" class="ml-2 size-8 align-middle" /></label
+        ><label class="text-sm font-medium"
+          >{{ t('charts.titleAlign')
+          }}<select
+            v-model="titleAlign"
+            class="mt-1 block w-full rounded border border-input bg-background px-2 py-1"
+          >
+            <option value="left">Left</option>
+            <option value="center">Center</option>
+            <option value="right">Right</option>
+          </select></label
+        ><label class="flex items-center justify-between text-sm font-medium"
+          ><span>{{ t('charts.showLegend') }}</span
+          ><input v-model="showLegend" type="checkbox" class="size-4 accent-primary"
+        /></label>
+      </div>
+    </section>
+    <section
+      v-if="false"
+      class="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]"
+      aria-label="Chart data and style configuration"
+    >
+      <div class="rounded-2xl border border-input bg-card p-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="font-semibold">{{ t('charts.tableData') }}</h2>
+            <p class="text-sm text-muted-foreground">{{ t('charts.tableHint') }}</p>
+          </div>
+          <div class="flex gap-2">
+            <label class="text-sm"
+              >{{ t('charts.dimension')
+              }}<select
+                v-model="dimensionColumn"
+                class="ml-1 rounded border border-input bg-background px-2 py-1"
+              >
+                <option value="label">Day</option>
+              </select></label
+            ><label class="text-sm"
+              >{{ t('charts.metric')
+              }}<select
+                v-model="valueColumn"
+                class="ml-1 rounded border border-input bg-background px-2 py-1"
+              >
+                <option value="value">Revenue</option>
+                <option value="cost">Cost</option>
+                <option value="users">Users</option>
+              </select></label
+            >
+          </div>
+        </div>
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full min-w-[35rem] text-sm">
+            <thead class="border-b border-input text-left text-muted-foreground">
+              <tr>
+                <th class="p-2">Day</th>
+                <th class="p-2">Revenue</th>
+                <th class="p-2">Cost</th>
+                <th class="p-2">Users</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in tableRows" :key="row.label" class="border-b border-input/60">
+                <td class="p-2"><input v-model="row.label" class="w-full bg-transparent" /></td>
+                <td class="p-2">
+                  <input
+                    v-model.number="row.value"
+                    type="number"
+                    class="w-20 rounded border border-input bg-background px-2 py-1"
