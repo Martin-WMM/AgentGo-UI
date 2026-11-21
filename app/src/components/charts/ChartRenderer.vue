@@ -298,3 +298,153 @@ const pieSegments = computed(() => {
           :stroke="colors.primary"
           stroke-width="3"
         />
+        <line
+          x1="18"
+          :y1="205 - point.value"
+          x2="62"
+          :y2="205 - point.value"
+          :stroke="colors.primary"
+          stroke-width="3"
+        />
+      </g>
+    </g>
+    <g v-else-if="type === 'wordcloud'" transform="translate(60 45)">
+      <text
+        v-for="(point, index) in data"
+        :key="point.label"
+        :x="(index % 3) * 195 + 15"
+        :y="Math.floor(index / 3) * 75 + 45"
+        :fill="colorAt(index)"
+        :font-size="14 + point.value / 5"
+        font-weight="600"
+        class="cursor-pointer"
+        @click="emit('select', index)"
+      >
+        {{ point.label }}
+      </text>
+    </g>
+    <g v-else-if="type === 'waterfall'" transform="translate(70 25)">
+      <g v-for="(point, index) in data" :key="point.label">
+        <rect
+          :x="index * 80"
+          :y="220 - point.value"
+          width="48"
+          :height="point.value"
+          :fill="colorAt(index)"
+          rx="5"
+          @click="emit('select', index)"
+        />
+        <line
+          v-if="index < data.length - 1"
+          :x1="index * 80 + 48"
+          :y1="220 - point.value"
+          :x2="(index + 1) * 80"
+          :y2="220 - data[index + 1].value"
+          class="stroke-muted-foreground"
+          stroke-dasharray="4 4"
+        />
+      </g>
+    </g>
+    <g v-else-if="type === 'funnel'" transform="translate(180 25)">
+      <polygon
+        v-for="(point, index) in data.slice(0, 5)"
+        :key="point.label"
+        :points="`${index * 28},${index * 42} ${340 - index * 28},${index * 42} ${310 - index * 28},${(index + 1) * 42} ${30 + index * 28},${(index + 1) * 42}`"
+        :fill="colorAt(index)"
+        :opacity="1 - index * 0.13"
+        class="cursor-pointer"
+        @click="emit('select', index)"
+      />
+    </g>
+    <g v-else-if="type === 'treemap'" transform="translate(60 35)">
+      <rect
+        v-for="(point, index) in data.slice(0, 6)"
+        :key="point.label"
+        :x="(index % 3) * 190"
+        :y="Math.floor(index / 3) * 105"
+        :width="160 - index * 8"
+        height="82"
+        rx="10"
+        :fill="colorAt(index)"
+        :opacity="0.35 + point.value / 160"
+        @click="emit('select', index)"
+      />
+      <text
+        v-for="(point, index) in data.slice(0, 6)"
+        :key="`label-${point.label}`"
+        :x="(index % 3) * 190 + 12"
+        :y="Math.floor(index / 3) * 105 + 42"
+        class="fill-background text-[14px]"
+      >
+        {{ point.label }}
+      </text>
+    </g>
+    <g v-else-if="type === 'sankey'" transform="translate(70 38)">
+      <g v-for="(point, index) in data.slice(0, 4)" :key="point.label">
+        <rect x="0" :y="index * 52" width="22" height="30" :fill="colorAt(index)" />
+        <path
+          :d="`M22 ${index * 52 + 15} C180 ${index * 52 + 15}, 280 ${index * 52 + 15}, 480 ${(index % 3) * 62 + 15}`"
+          fill="none"
+          :stroke="colors.fill"
+          :stroke-width="10 + point.value / 10"
+          opacity=".8"
+        />
+        <rect x="480" :y="(index % 3) * 62" width="22" height="30" :fill="colorAt(index)" />
+      </g>
+    </g>
+    <g v-else-if="type === 'bubble'" transform="translate(75 30)">
+      <circle
+        v-for="(point, index) in data"
+        :key="point.label"
+        :cx="50 + index * 80"
+        :cy="210 - point.value * 1.7"
+        :r="10 + point.value / 7"
+        :fill="colorAt(index)"
+        opacity=".65"
+        class="cursor-pointer"
+        @click="emit('select', index)"
+      />
+    </g>
+    <g v-else-if="type === 'polarArea'" transform="translate(350 145)">
+      <path
+        v-for="(point, index) in data.slice(0, 6)"
+        :key="point.label"
+        :d="`M0 0 L ${Math.cos((index * Math.PI) / 3) * point.value} ${Math.sin((index * Math.PI) / 3) * point.value} A ${point.value} ${point.value} 0 0 1 ${Math.cos(((index + 1) * Math.PI) / 3) * point.value} ${Math.sin(((index + 1) * Math.PI) / 3) * point.value} Z`"
+        :fill="colorAt(index)"
+        :opacity="0.35 + index * 0.08"
+        @click="emit('select', index)"
+      />
+    </g>
+    <g v-else-if="type === 'candlestick'" transform="translate(75 35)">
+      <g v-for="(point, index) in data" :key="point.label">
+        <line
+          :x1="index * 78 + 25"
+          :y1="210 - point.value * 1.8"
+          :x2="index * 78 + 25"
+          :y2="235 - point.value * 1.8"
+          :stroke="colors.primary"
+          stroke-width="3"
+        />
+        <rect
+          :x="index * 78 + 14"
+          :y="195 - point.value * 1.6"
+          width="22"
+          height="36"
+          :fill="colorAt(index)"
+        />
+      </g>
+    </g>
+    <g v-else-if="type === 'histogram'" transform="translate(80 25)">
+      <rect
+        v-for="(point, index) in data"
+        :key="point.label"
+        :x="index * 76"
+        :y="220 - point.value * 1.8"
+        width="74"
+        :height="point.value * 1.8"
+        :fill="colorAt(index)"
+        opacity=".75"
+      />
+    </g>
+    <g v-else-if="type === 'stackedBar'">
+      <g v-for="(point, index) in points" :key="point.label">
