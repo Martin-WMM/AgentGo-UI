@@ -148,3 +148,87 @@ async function saveModel() {
           type="button"
           class="ag-btn ag-btn-success"
           :disabled="!canSave || loading || loadFailed"
+          @click="saveModel"
+        >
+          <Icon icon="lucide:save" width="16" height="16" aria-hidden="true" />
+          {{ saving ? t('models.saving') : t('models.save') }}
+        </button>
+      </div>
+    </div>
+
+    <ContentSkeleton v-if="loading" kind="form" :label="t('models.loading')" />
+    <div
+      v-else-if="loadFailed"
+      class="rounded-2xl border border-dashed border-input px-6 py-16 text-center"
+    >
+      <h2 class="text-lg font-semibold">{{ t('models.notFound') }}</h2>
+      <button class="ag-btn ag-btn-info mt-5" type="button" @click="goBack">
+        {{ t('models.backToList') }}
+      </button>
+    </div>
+    <form v-else class="space-y-4" @submit.prevent="saveModel">
+      <label class="block text-sm font-medium">
+        {{ t('models.group') }}
+        <input
+          v-model="form.groupName"
+          required
+          maxlength="255"
+          class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+          :placeholder="t('models.groupPlaceholder')"
+        />
+      </label>
+      <label class="block text-sm font-medium">
+        {{ t('models.name') }}
+        <input
+          v-model="form.name"
+          required
+          maxlength="255"
+          class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+        />
+      </label>
+      <div class="ag-field-grid">
+        <label class="block text-sm font-medium">
+          {{ t('models.provider') }}
+          <input
+            v-model="form.provider"
+            required
+            maxlength="255"
+            list="model-providers"
+            :placeholder="t('models.providerPlaceholder')"
+            class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+          />
+          <datalist id="model-providers">
+            <option v-for="item in providerSuggestions" :key="item" :value="item" />
+          </datalist>
+        </label>
+        <label class="block text-sm font-medium">
+          {{ t('models.type') }}
+          <select
+            v-model="form.type"
+            class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option v-for="item in modelTypes" :key="item" :value="item">
+              {{ t(`models.types.${item}`) }}
+            </option>
+          </select>
+        </label>
+      </div>
+      <label class="block text-sm font-medium">
+        {{ t('models.descriptionLabel') }}
+        <textarea
+          v-model="form.description"
+          maxlength="2000"
+          rows="2"
+          class="mt-2 w-full resize-none rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+        />
+      </label>
+      <JsonEditor
+        v-model="form.configuration"
+        :label="t('models.configuration')"
+        placeholder='{"model":"gpt-4o-mini"}'
+        expect="object"
+      />
+      <p class="text-xs text-muted-foreground">{{ t('models.configurationHint') }}</p>
+    </form>
+  </section>
+</template>
