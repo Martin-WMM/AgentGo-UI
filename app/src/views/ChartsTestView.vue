@@ -598,3 +598,153 @@ function download(blob: Blob, name: string) {
                 :y2="28 + step * 40"
               />
             </g>
+            <g v-if="showLabels" class="fill-muted-foreground text-[12px]">
+              <text
+                v-for="point in chartPoints"
+                :key="point.label"
+                :x="point.x"
+                y="258"
+                text-anchor="middle"
+              >
+                {{ point.label }}
+              </text>
+              <text
+                v-for="step in 5"
+                :key="`scale-${step}`"
+                x="42"
+                :y="34 + step * 40"
+                text-anchor="end"
+              >
+                {{ Math.round(maxValue - (step * maxValue) / 5) }}
+              </text>
+            </g>
+            <path v-if="chartType === 'area'" :d="areaPath" :fill="colors.fill" opacity=".72" />
+            <path
+              v-if="chartType === 'line' || chartType === 'area'"
+              :d="linePath"
+              fill="none"
+              :stroke="colors.primary"
+              stroke-width="4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <g v-for="point in chartPoints" v-show="chartType === 'bar'" :key="point.label">
+              <rect
+                :x="point.x - 22"
+                :y="point.y"
+                width="44"
+                :height="228 - point.y"
+                rx="7"
+                :fill="colors.primary"
+                class="cursor-pointer transition-opacity"
+                :opacity="selected === null || selected === chartPoints.indexOf(point) ? 1 : 0.35"
+                @click="selectPoint(chartPoints.indexOf(point))"
+              />
+            </g>
+            <g
+              v-for="(point, index) in chartPoints"
+              v-show="chartType !== 'bar'"
+              :key="point.label"
+            >
+              <circle
+                :cx="point.x"
+                :cy="point.y"
+                r="highlighted === index || selected === index ? 8 : 5"
+                :fill="colors.primary"
+                class="cursor-pointer stroke-card transition-all"
+                stroke-width="3"
+                @mouseenter="highlighted = index"
+                @mouseleave="highlighted = null"
+                @click="selectPoint(index)"
+              />
+              <g v-if="highlighted === index || selected === index">
+                <rect
+                  :x="point.x - 29"
+                  :y="point.y - 39"
+                  width="58"
+                  height="25"
+                  rx="6"
+                  class="fill-foreground"
+                />
+                <text
+                  :x="point.x"
+                  :y="point.y - 22"
+                  text-anchor="middle"
+                  class="fill-background text-[12px]"
+                >
+                  {{ point.value }}
+                </text>
+              </g>
+            </g>
+          </svg>
+          <svg
+            v-if="false"
+            viewBox="0 0 700 290"
+            class="h-auto w-full"
+            role="img"
+            :aria-label="t('charts.preview')"
+          >
+            <g transform="translate(350 145) rotate(-90)">
+              <circle
+                r="91"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="42"
+                class="text-muted"
+              />
+              <circle
+                v-for="segment in donutSegments"
+                :key="segment.label"
+                r="91"
+                fill="none"
+                :stroke="colors.primary"
+                stroke-width="42"
+                pathLength="100"
+                :stroke-dasharray="`${segment.dash - 1} ${101 - segment.dash}`"
+                :stroke-dashoffset="-segment.offset"
+                class="cursor-pointer transition-opacity"
+                :opacity="selected === null || selected === segment.index ? 1 : 0.35"
+                @click="selectPoint(segment.index)"
+              />
+            </g>
+            <text
+              x="350"
+              y="138"
+              text-anchor="middle"
+              class="fill-foreground text-[28px] font-semibold"
+            >
+              {{ total }}
+            </text>
+            <text x="350" y="164" text-anchor="middle" class="fill-muted-foreground text-[13px]">
+              {{ t('charts.total') }}
+            </text>
+            <g v-if="showLabels" class="fill-muted-foreground text-[13px]">
+              <text
+                v-for="(segment, index) in donutSegments"
+                :key="segment.label"
+                x="525"
+                :y="78 + index * 27"
+              >
+                {{ segment.label }} · {{ segment.value }}
+              </text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <aside v-if="false" class="space-y-5">
+        <div class="rounded-2xl border border-input bg-card p-5">
+          <h2 class="font-semibold">{{ t('charts.configuration') }}</h2>
+          <div class="mt-4 space-y-4">
+            <label class="block text-sm font-medium"
+              >{{ t('charts.palette')
+              }}<select
+                v-model="palette"
+                class="mt-1.5 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="indigo">Indigo</option>
+                <option value="emerald">Emerald</option>
+                <option value="rose">Rose</option>
+              </select></label
+            ><label class="flex cursor-pointer items-center justify-between gap-3 text-sm"
+              ><span>{{ t('charts.showGrid') }}</span
