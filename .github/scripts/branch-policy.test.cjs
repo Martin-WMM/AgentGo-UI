@@ -69,3 +69,9 @@ test('requires the current target commit to be an ancestor of the head', () => {
     assert.throws(() => validateAncestry(status));
   }
 });
+
+test('accepts AgentGo cycle release names with uppercase', () => {
+  const branch = 'release/26-TM6-1';
+  assert.equal(validateBranchFlow(pr('feature/7-governance', branch)).sourceBranch, branch);
+  assert.equal(validateBranchFlow(pr(branch, 'main')).sourceBranch, 'main');
+});
