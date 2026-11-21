@@ -20,7 +20,9 @@ const description = computed(() =>
 </script>
 
 <template>
-  <div class="flex min-h-[calc(100vh-8rem)] flex-col items-center justify-center px-6 py-16">
+  <div
+    class="flex min-h-[calc(100vh-8rem)] w-full min-w-0 max-w-full flex-col items-center justify-center px-6 py-16"
+  >
     <div class="w-full max-w-md text-center">
       <span
         class="mx-auto mb-6 flex size-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground"
@@ -34,11 +36,7 @@ const description = computed(() =>
       </span>
       <h1 class="text-2xl font-semibold tracking-tight">{{ title }}</h1>
       <p class="mt-3 text-sm leading-relaxed text-muted-foreground">{{ description }}</p>
-      <button
-        type="button"
-        class="mt-8 inline-flex items-center justify-center gap-2 rounded-lg bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
-        @click="auth.login"
-      >
+      <button type="button" class="ag-btn ag-btn-info mt-8" @click="auth.login">
         <Icon icon="lucide:log-in" width="16" height="16" aria-hidden="true" />
         {{ t('auth.gate.signIn') }}
       </button>
