@@ -898,3 +898,153 @@ function download(blob: Blob, name: string) {
                     v-model.number="row.value"
                     type="number"
                     class="w-20 rounded border border-input bg-background px-2 py-1"
+                  />
+                </td>
+                <td class="p-2">
+                  <input
+                    v-model.number="row.cost"
+                    type="number"
+                    class="w-20 rounded border border-input bg-background px-2 py-1"
+                  />
+                </td>
+                <td class="p-2">
+                  <input
+                    v-model.number="row.users"
+                    type="number"
+                    class="w-20 rounded border border-input bg-background px-2 py-1"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="rounded-2xl border border-input bg-card p-5">
+        <h2 class="font-semibold">{{ t('charts.style') }}</h2>
+        <div class="mt-4 space-y-3">
+          <label class="block text-sm font-medium"
+            >{{ t('charts.titleLabel')
+            }}<input
+              v-model="title"
+              class="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2" /></label
+          ><label class="block text-sm font-medium"
+            >{{ t('charts.fontSize')
+            }}<select
+              v-model="fontSize"
+              class="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2"
+            >
+              <option value="sm">Small</option>
+              <option value="md">Medium</option>
+              <option value="lg">Large</option>
+            </select></label
+          ><label class="block text-sm font-medium"
+            >{{ t('charts.compareMetric')
+            }}<select
+              v-model="compareColumn"
+              class="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2"
+            >
+              <option value="cost">Cost</option>
+              <option value="users">Users</option>
+            </select></label
+          ><label class="flex items-center justify-between text-sm"
+            ><span>{{ t('charts.horizontal') }}</span
+            ><input v-model="horizontal" type="checkbox" class="size-4 accent-primary"
+          /></label>
+        </div>
+      </div>
+    </section>
+    <section v-if="false" class="mt-10" aria-labelledby="chart-examples-title">
+      <div class="mb-4">
+        <h2 id="chart-examples-title" class="text-xl font-semibold">{{ t('charts.examples') }}</h2>
+        <p class="mt-1 text-sm text-muted-foreground">{{ t('charts.examplesHint') }}</p>
+      </div>
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <button
+          v-for="type in chartTypes"
+          :key="`example-${type}`"
+          type="button"
+          class="group rounded-2xl border border-input bg-card p-4 text-left transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          @click="chartType = type"
+        >
+          <div class="mb-3 flex items-center justify-between">
+            <h3 class="font-medium">{{ t(`charts.types.${type}`) }}</h3>
+            <Icon
+              icon="lucide:expand"
+              class="text-muted-foreground group-hover:text-primary"
+              width="17"
+            />
+          </div>
+          <ChartRenderer
+            :type="type"
+            :data="chartData"
+            :compare-data="compareData"
+            :colors="colors"
+            :show-grid="showGrid"
+            :show-labels="showLabels"
+            :smooth="smooth"
+            :stroke-width="strokeWidth"
+            :corner-radius="cornerRadius"
+            :horizontal="horizontal"
+            :compact="true"
+            :selected-index="selected"
+            @select="selectPoint"
+          />
+          <p class="text-sm text-muted-foreground">{{ t(`charts.exampleDescriptions.${type}`) }}</p>
+        </button>
+      </div>
+    </section>
+    <Transition name="ag-fade"
+      ><div v-if="showConfig" class="fixed inset-0 z-40 bg-black/40" @click="showConfig = false"
+    /></Transition>
+    <Transition name="ag-fade"
+      ><aside
+        v-if="showConfig"
+        class="fixed inset-y-0 right-0 z-50 w-full max-w-md overflow-y-auto border-l border-input bg-background p-6 shadow-2xl"
+        aria-label="Chart configuration"
+      >
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold">{{ t('charts.configuration') }}</h2>
+          <button
+            class="rounded-lg p-2 hover:bg-accent"
+            type="button"
+            :aria-label="t('charts.close')"
+            @click="showConfig = false"
+          >
+            <Icon icon="lucide:x" width="20" />
+          </button>
+        </div>
+        <div class="mt-6 space-y-5">
+          <label class="block text-sm font-medium"
+            >{{ t('charts.type')
+            }}<select
+              v-model="chartType"
+              class="mt-1.5 block w-full rounded-lg border border-input bg-card px-3 py-2"
+            >
+              <option v-for="type in chartTypes" :key="type" :value="type">
+                {{ t(`charts.types.${type}`) }}
+              </option>
+            </select></label
+          ><label class="block text-sm font-medium"
+            >{{ t('charts.titleLabel')
+            }}<input
+              v-model="title"
+              class="mt-1.5 block w-full rounded-lg border border-input bg-card px-3 py-2"
+          /></label>
+          <fieldset class="grid grid-cols-2 gap-3 rounded-lg border border-input p-3">
+            <legend class="px-1 text-sm font-medium">{{ t('charts.axis') }}</legend>
+            <label class="text-sm"
+              >{{ t('charts.xAxisTitle')
+              }}<input
+                v-model="xAxisTitle"
+                class="mt-1 block w-full rounded border border-input bg-card px-2 py-1" /></label
+            ><label class="text-sm"
+              >{{ t('charts.yAxisTitle')
+              }}<input
+                v-model="yAxisTitle"
+                class="mt-1 block w-full rounded border border-input bg-card px-2 py-1" /></label
+            ><label class="text-sm"
+              >{{ t('charts.xAxisDescription')
+              }}<input
+                v-model="xAxisDescription"
+                class="mt-1 block w-full rounded border border-input bg-card px-2 py-1" /></label
+            ><label class="text-sm"
