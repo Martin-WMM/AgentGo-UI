@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue';
 
+import { batchDeleteIds } from '../api/batchDelete';
 import { FileRequestError, apiData, apiRequest } from '../api/fileRequest';
 
 /** Capability categories accepted by `/api/v1/models`. */
@@ -18,6 +19,7 @@ export type ModelType = (typeof modelTypes)[number];
 /** User-owned model configuration returned by the models API. */
 export interface ManagedModel {
   id: string;
+  groupName: string;
   name: string;
   provider: string;
   type: ModelType;
@@ -29,6 +31,7 @@ export interface ManagedModel {
 
 /** Fields sent when creating or replacing a model. */
 export interface ModelInput {
+  groupName: string;
   name: string;
   provider: string;
   type: ModelType;
@@ -37,7 +40,8 @@ export interface ModelInput {
 }
 
 interface ModelDto {
-  id: string;
+  id: string | number;
+  groupName?: string | null;
   name: string;
   provider: string;
   type: ModelType;
@@ -51,7 +55,8 @@ const models = ref<ManagedModel[]>([]);
 
 function toModel(dto: ModelDto): ManagedModel {
   return {
-    id: dto.id,
+    id: String(dto.id),
+    groupName: dto.groupName?.trim() || 'default',
     name: dto.name,
     provider: dto.provider,
     type: dto.type,
@@ -64,6 +69,7 @@ function toModel(dto: ModelDto): ManagedModel {
 
 function requestBody(input: ModelInput) {
   return {
+    groupName: input.groupName.trim() || 'default',
     name: input.name.trim(),
     provider: input.provider.trim(),
     type: input.type,
@@ -113,6 +119,15 @@ export function useModels() {
     models.value = data.map(toModel);
   }
 
+  async function getModel(id: string) {
+    const cached = models.value.find((item) => item.id === id);
+    if (cached) return cached;
+    const data = await apiData<ModelDto>(`/api/v1/models/${encodeURIComponent(id)}`);
+    const model = toModel(data);
+    models.value = [model, ...models.value.filter((item) => item.id !== model.id)];
+    return model;
+  }
+
   async function createModel(input: ModelInput) {
     const created = await apiData<ModelDto>('/api/v1/models', {
       method: 'POST',
@@ -140,11 +155,19 @@ export function useModels() {
     models.value = models.value.filter((item) => item.id !== id);
   }
 
+  async function removeModels(ids: string[]) {
+    await batchDeleteIds('/api/v1/models/batch-delete', ids);
+    const removed = new Set(ids);
+    models.value = models.value.filter((item) => !removed.has(item.id));
+  }
+
   return {
     models: sortedModels,
     refreshModels,
+    getModel,
     createModel,
     updateModel,
     removeModel,
+    removeModels,
   };
 }
