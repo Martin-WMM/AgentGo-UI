@@ -148,3 +148,153 @@ async function saveAgent() {
     if (agentId.value) {
       await updateAgent(agentId.value, input);
       toastSuccess(t('a2a.updated', { name: form.name.trim() }), t('toast.success'));
+    } else {
+      await createAgent(input);
+      toastSuccess(t('a2a.created', { name: form.name.trim() }), t('toast.success'));
+    }
+    goBack();
+  } catch (caught) {
+    toastError(t(a2aFailureI18n(caught)), t('toast.error'));
+  } finally {
+    saving.value = false;
+  }
+}
+</script>
+
+<template>
+  <section class="ag-page ag-page--tight">
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-start gap-3">
+        <button
+          type="button"
+          class="mt-0.5 rounded-xl border border-input p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          :aria-label="t('a2a.backToList')"
+          @click="goBack"
+        >
+          <Icon icon="lucide:arrow-left" width="18" height="18" aria-hidden="true" />
+        </button>
+        <div>
+          <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">{{ pageTitle }}</h1>
+          <p class="mt-1.5 text-sm text-muted-foreground">{{ t('a2a.formHint') }}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 self-end sm:self-auto">
+        <button type="button" class="ag-btn ag-btn-ghost" @click="goBack">
+          {{ t('a2a.cancel') }}
+        </button>
+        <button
+          type="button"
+          class="ag-btn ag-btn-success"
+          :disabled="!canSave || loading || loadFailed"
+          @click="saveAgent"
+        >
+          <Icon icon="lucide:save" width="16" height="16" aria-hidden="true" />
+          {{ saving ? t('a2a.saving') : t('a2a.save') }}
+        </button>
+      </div>
+    </div>
+
+    <ContentSkeleton v-if="loading" kind="form" :label="t('a2a.loading')" />
+    <div
+      v-else-if="loadFailed"
+      class="rounded-2xl border border-dashed border-input px-6 py-16 text-center"
+    >
+      <h2 class="text-lg font-semibold">{{ t('a2a.notFound') }}</h2>
+      <button class="ag-btn ag-btn-info mt-5" type="button" @click="goBack">
+        {{ t('a2a.backToList') }}
+      </button>
+    </div>
+    <form v-else class="space-y-4" @submit.prevent="saveAgent">
+      <label class="block text-sm font-medium">
+        {{ t('a2a.group') }}
+        <input
+          v-model="form.groupName"
+          required
+          maxlength="255"
+          class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+          :placeholder="t('a2a.groupPlaceholder')"
+        />
+      </label>
+      <label class="block text-sm font-medium">
+        {{ t('a2a.name') }}
+        <input
+          v-model="form.name"
+          required
+          maxlength="255"
+          class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+        />
+      </label>
+      <label class="block text-sm font-medium">
+        {{ t('a2a.cardUrl') }}
+        <input
+          v-model="form.cardUrl"
+          required
+          maxlength="2048"
+          type="url"
+          :placeholder="t('a2a.cardUrlPlaceholder')"
+          class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+        />
+      </label>
+      <div class="ag-field-grid">
+        <label class="block text-sm font-medium">
+          {{ t('a2a.status') }}
+          <select
+            v-model="form.status"
+            class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option v-for="item in a2aAgentStatuses" :key="item" :value="item">
+              {{ t(`a2a.statuses.${item}`) }}
+            </option>
+          </select>
+        </label>
+        <label class="flex items-end gap-2 pb-2.5 text-sm font-medium">
+          <input v-model="form.enabled" type="checkbox" class="size-4 rounded border-input" />
+          {{ t('a2a.enabled') }}
+        </label>
+      </div>
+      <label class="block text-sm font-medium">
+        {{ t('a2a.descriptionLabel') }}
+        <textarea
+          v-model="form.description"
+          maxlength="4000"
+          rows="3"
+          class="mt-2 w-full resize-none rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+        />
+        <span class="mt-1.5 block text-xs font-normal text-muted-foreground">
+          {{ t('a2a.descriptionVectorHint') }}
+        </span>
+      </label>
+      <p v-if="!isCreate && descriptionVectorLength > 0" class="text-xs text-muted-foreground">
+        {{ t('a2a.descriptionVectorLength', { count: descriptionVectorLength }) }}
+      </p>
+      <label class="block text-sm font-medium">
+        {{ t('a2a.tags') }}
+        <div v-if="form.tags.length" class="mt-2 flex flex-wrap gap-2">
+          <button
+            v-for="tag in form.tags"
+            :key="tag"
+            type="button"
+            class="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent/80"
+            :aria-label="t('a2a.removeTag', { tag })"
+            @click="removeTag(tag)"
+          >
+            {{ tag }}
+            <Icon icon="lucide:x" width="12" height="12" aria-hidden="true" />
+          </button>
+        </div>
+        <input
+          v-model="tagDraft"
+          maxlength="32"
+          class="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+          :placeholder="t('a2a.tagsPlaceholder')"
+          @keydown.enter.prevent="addTag"
+          @keydown.,.prevent="addTag"
+          @blur="addTag"
+        />
+        <p class="mt-1.5 text-xs font-normal text-muted-foreground">{{ t('a2a.tagsHint') }}</p>
+        <p v-if="tagError" class="mt-1 text-xs text-destructive">{{ tagError }}</p>
+      </label>
+      <JsonEditor
+        v-model="form.metadata"
+        :label="t('a2a.metadata')"
+        placeholder='{"team":"ops"}'
