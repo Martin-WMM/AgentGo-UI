@@ -1048,3 +1048,153 @@ function download(blob: Blob, name: string) {
                 v-model="xAxisDescription"
                 class="mt-1 block w-full rounded border border-input bg-card px-2 py-1" /></label
             ><label class="text-sm"
+              >{{ t('charts.yAxisDescription')
+              }}<input
+                v-model="yAxisDescription"
+                class="mt-1 block w-full rounded border border-input bg-card px-2 py-1"
+            /></label>
+          </fieldset>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="text-sm font-medium"
+              >{{ t('charts.metric')
+              }}<select
+                v-model="valueColumn"
+                class="mt-1.5 block w-full rounded-lg border border-input bg-card px-3 py-2"
+              >
+                <option value="value">Revenue</option>
+                <option value="cost">Cost</option>
+                <option value="users">Users</option>
+              </select></label
+            ><label class="text-sm font-medium"
+              >{{ t('charts.compareMetric')
+              }}<select
+                v-model="compareColumn"
+                class="mt-1.5 block w-full rounded-lg border border-input bg-card px-3 py-2"
+              >
+                <option value="cost">Cost</option>
+                <option value="users">Users</option>
+              </select></label
+            >
+          </div>
+          <label class="block text-sm font-medium"
+            >{{ t('charts.palette')
+            }}<select
+              v-model="palette"
+              class="mt-1.5 block w-full rounded-lg border border-input bg-card px-3 py-2"
+            >
+              <option value="indigo">Indigo</option>
+              <option value="emerald">Emerald</option>
+              <option value="rose">Rose</option>
+            </select></label
+          >
+          <div class="grid grid-cols-2 gap-3">
+            <label class="text-sm font-medium"
+              >{{ t('charts.lineWidth')
+              }}<input
+                v-model.number="strokeWidth"
+                type="range"
+                min="1"
+                max="12"
+                class="mt-2 w-full accent-primary" /></label
+            ><label class="text-sm font-medium"
+              >{{ t('charts.opacity')
+              }}<input
+                v-model.number="opacity"
+                type="range"
+                min="10"
+                max="100"
+                class="mt-2 w-full accent-primary" /></label
+            ><label class="text-sm font-medium"
+              >{{ t('charts.cornerRadius')
+              }}<input
+                v-model.number="cornerRadius"
+                type="range"
+                min="0"
+                max="24"
+                class="mt-2 w-full accent-primary" /></label
+            ><label class="text-sm font-medium"
+              >{{ t('charts.padding')
+              }}<input
+                v-model.number="padding"
+                type="range"
+                min="0"
+                max="48"
+                class="mt-2 w-full accent-primary"
+            /></label>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="text-sm font-medium"
+              >{{ t('charts.chartBackground')
+              }}<input
+                v-model="chartBackground"
+                type="color"
+                class="ml-2 size-8 align-middle" /></label
+            ><label class="text-sm font-medium"
+              >{{ t('charts.titleColor')
+              }}<input v-model="titleColor" type="color" class="ml-2 size-8 align-middle"
+            /></label>
+          </div>
+          <label class="flex items-center justify-between text-sm"
+            ><span>{{ t('charts.showGrid') }}</span
+            ><input v-model="showGrid" type="checkbox" class="size-4 accent-primary" /></label
+          ><label class="flex items-center justify-between text-sm"
+            ><span>{{ t('charts.showLabels') }}</span
+            ><input v-model="showLabels" type="checkbox" class="size-4 accent-primary" /></label
+          ><label class="flex items-center justify-between text-sm"
+            ><span>{{ t('charts.smooth') }}</span
+            ><input v-model="smooth" type="checkbox" class="size-4 accent-primary"
+          /></label>
+        </div></aside
+    ></Transition>
+    <Transition name="ag-fade"
+      ><div
+        v-if="showData"
+        class="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4"
+        @click.self="showData = false"
+      >
+        <div
+          class="max-h-[80vh] w-full max-w-3xl overflow-auto rounded-2xl border border-input bg-background p-6 shadow-2xl"
+        >
+          <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-lg font-semibold">{{ t('charts.tableData') }}</h2>
+            <button
+              class="rounded-lg p-2 hover:bg-accent"
+              type="button"
+              :aria-label="t('charts.close')"
+              @click="showData = false"
+            >
+              <Icon icon="lucide:x" width="20" />
+            </button>
+          </div>
+          <table class="w-full text-sm">
+            <thead class="border-b border-input text-left text-muted-foreground">
+              <tr>
+                <th class="p-2">Day</th>
+                <th class="p-2">Revenue</th>
+                <th class="p-2">Cost</th>
+                <th class="p-2">Users</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in tableRows" :key="row.label" class="border-b border-input/60">
+                <td class="p-2"><input v-model="row.label" class="w-full bg-transparent" /></td>
+                <td class="p-2">
+                  <input
+                    v-model.number="row.value"
+                    type="number"
+                    class="w-20 rounded border border-input bg-card px-2 py-1"
+                  />
+                </td>
+                <td class="p-2">
+                  <input
+                    v-model.number="row.cost"
+                    type="number"
+                    class="w-20 rounded border border-input bg-card px-2 py-1"
+                  />
+                </td>
+                <td class="p-2">
+                  <input
+                    v-model.number="row.users"
+                    type="number"
+                    class="w-20 rounded border border-input bg-card px-2 py-1"
+                  />
