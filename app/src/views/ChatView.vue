@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { toastError, toastSuccess } from '@agentgo/ui';
 import { Icon } from '@iconify/vue';
 import MarkdownRender from 'markstream-vue';
