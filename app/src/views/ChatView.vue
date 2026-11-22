@@ -314,7 +314,7 @@ function speakAnswer(item: ChatMessage) {
   const text = answerText(item)
     .replace(/\$\$[\s\S]*?\$\$/g, ' ')
     .replace(/\$[^$]+\$/g, ' ')
-    .replace(/[`*_#>\[\]()]/g, ' ')
+    .replace(/[`*_#>[\]()]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
   if (!text) return;
