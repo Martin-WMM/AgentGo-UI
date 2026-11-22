@@ -148,3 +148,104 @@ function onToggleOption(blockId: string, optionId: string) {
   if (blockId === 'mcp') toggleMulti('mcpServerIds', optionId);
   if (blockId === 'a2a') toggleMulti('a2aAgentIds', optionId);
   if (blockId === 'apis') toggleMulti('apiIds', optionId);
+  if (blockId === 'knowledge') toggleMulti('knowledgeBaseIds', optionId);
+}
+
+function isPlaceholder(blockId: string): boolean {
+  return blockId === 'databases' || blockId === 'apis' || blockId === 'knowledge';
+}
+</script>
+
+<template>
+  <div ref="root" class="relative flex min-w-0 flex-1 flex-wrap items-center gap-1">
+    <div v-for="block in blocks" :key="block.id" class="relative">
+      <button
+        type="button"
+        class="inline-flex max-w-[9.5rem] items-center gap-1 rounded-lg border px-2 py-1 text-xs transition-colors"
+        :class="
+          openBlock === block.id || block.count() > 0
+            ? 'border-primary/40 bg-primary/10 text-foreground'
+            : 'border-transparent bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground'
+        "
+        :aria-expanded="openBlock === block.id"
+        :aria-label="t(block.labelKey)"
+        :disabled="disabled"
+        @click.stop="toggleBlock(block.id)"
+      >
+        <Icon :icon="block.icon" width="14" height="14" class="shrink-0" aria-hidden="true" />
+        <span class="truncate">{{ t(block.labelKey) }}</span>
+        <span
+          v-if="block.count() > 0"
+          class="rounded-full bg-primary/15 px-1.5 text-[10px] font-medium text-primary"
+        >
+          {{ block.count() }}
+        </span>
+        <Icon
+          icon="lucide:chevron-up"
+          width="12"
+          height="12"
+          class="shrink-0 opacity-70 transition-transform"
+          :class="openBlock === block.id ? 'rotate-180' : ''"
+          aria-hidden="true"
+        />
+      </button>
+
+      <div
+        v-if="openBlock === block.id"
+        class="absolute bottom-[calc(100%+0.4rem)] left-0 z-30 w-72 rounded-xl border border-input bg-card p-2 shadow-xl shadow-foreground/10"
+        role="dialog"
+        :aria-label="t(block.labelKey)"
+      >
+        <p class="px-1 pb-2 text-[11px] text-muted-foreground">
+          {{ t(`composerConfig.hints.${block.id}`) }}
+        </p>
+        <p
+          v-if="isPlaceholder(block.id)"
+          class="mb-2 rounded-lg bg-muted/50 px-2 py-1.5 text-[11px] text-muted-foreground"
+        >
+          {{ t('composerConfig.comingSoon') }}
+        </p>
+        <p
+          v-if="loadingBlock === block.id"
+          class="px-1 py-3 text-xs text-muted-foreground"
+        >
+          {{ t('composerConfig.loading') }}
+        </p>
+        <p
+          v-else-if="loadError && ['workspace', 'mcp', 'a2a'].includes(block.id)"
+          class="px-1 py-3 text-xs text-destructive"
+        >
+          {{ t('composerConfig.loadFailed') }}
+        </p>
+        <ul v-else-if="optionsFor(block.id).length" class="max-h-56 space-y-1 overflow-y-auto">
+          <li v-for="option in optionsFor(block.id)" :key="option.id">
+            <label
+              class="flex cursor-pointer items-start gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-accent"
+            >
+              <input
+                class="mt-0.5"
+                :type="block.id === 'workspace' || block.id === 'mode' ? 'radio' : 'checkbox'"
+                :name="`composer-${block.id}`"
+                :checked="isChecked(block.id, option.id)"
+                :disabled="disabled || option.disabled"
+                @change="onToggleOption(block.id, option.id)"
+              />
+              <span class="min-w-0 flex-1">
+                <span class="block truncate font-medium">{{ option.label }}</span>
+                <span
+                  v-if="option.description"
+                  class="block truncate text-[11px] text-muted-foreground"
+                >
+                  {{ option.description }}
+                </span>
+              </span>
+            </label>
+          </li>
+        </ul>
+        <p v-else class="px-1 py-3 text-xs text-muted-foreground">
+          {{ t('composerConfig.empty') }}
+        </p>
+      </div>
+    </div>
+  </div>
+</template>
