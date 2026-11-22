@@ -148,3 +148,153 @@ function historyToMessages(
 
 async function bootstrapSession() {
   const token = ++bootToken;
+  abort?.abort();
+  stopSpeech();
+  streaming.value = false;
+  loadingSession.value = true;
+  messages.value = [];
+  session.value = null;
+  try {
+    const rawId = route.params.sessionId;
+    if (!rawId) {
+      const created = await createChatSession();
+      if (token !== bootToken) return;
+      await refreshSessions();
+      await router.replace({
+        name: 'chat-session',
+        params: { sessionId: String(created.id) },
+        query: route.query.prompt ? { prompt: route.query.prompt } : {},
+      });
+      return;
+    }
+    const id = Number(rawId);
+    if (!Number.isFinite(id)) {
+      await router.replace({ name: 'chat' });
+      return;
+    }
+    const [detail, history] = await Promise.all([getChatSession(id), listChatMessages(id)]);
+    if (token !== bootToken) return;
+    session.value = detail;
+    messages.value = historyToMessages(history);
+    await refreshSessions();
+    const prompt = typeof route.query.prompt === 'string' ? route.query.prompt.trim() : '';
+    if (prompt) {
+      draft.value = prompt;
+      await router.replace({ name: 'chat-session', params: { sessionId: String(id) } });
+      await send();
+    }
+  } catch {
+    if (token !== bootToken) return;
+    toastError(t('chat.loadError'), t('toast.error'));
+    await router.replace({ name: 'chat' });
+  } finally {
+    if (token === bootToken) loadingSession.value = false;
+  }
+}
+
+function markFirstToken(assistant: ChatMessage) {
+  if (assistant.ttftMs != null || assistant.startedAt == null) return;
+  if (!assistant.turn.answer.content) return;
+  assistant.ttftMs = Math.max(0, performance.now() - assistant.startedAt);
+}
+
+async function send(overrideInput?: string, options?: { skipUserBubble?: boolean }) {
+  const input = (overrideInput ?? draft.value).trim();
+  const current = session.value;
+  if (!input || streaming.value || !current) return;
+  if (overrideInput == null) draft.value = '';
+  stopSpeech();
+  const startedAt = performance.now();
+  const assistantId = crypto.randomUUID();
+  if (!options?.skipUserBubble) {
+    messages.value.push({
+      id: crypto.randomUUID(),
+      role: 'user',
+      text: input,
+      turn: emptyAgentTurnVo(),
+    });
+  }
+  messages.value.push({
+    id: assistantId,
+    role: 'assistant',
+    text: '',
+    turn: emptyAgentTurnVo(),
+    startedAt,
+    ttftMs: null,
+    liked: null,
+    speaking: false,
+  });
+  streaming.value = true;
+  abort = new AbortController();
+  const signal = abort.signal;
+  await scrollToEnd();
+  try {
+    await streamAgent({
+      threadId: current.threadId,
+      sessionId: current.id,
+      input,
+      bindings: composerConfig.value?.toStreamMetadata() ?? {},
+      signal,
+      onEvent: (envelope) => {
+        const assistant = assistantMessage(assistantId);
+        if (!assistant) return;
+        assistant.turn = applyAgentStreamEvent(assistant.turn, envelope);
+        markFirstToken(assistant);
+        void scrollToEnd();
+      },
+    });
+    const assistant = assistantMessage(assistantId);
+    if (assistant && !assistant.turn.final) {
+      assistant.turn = {
+        ...assistant.turn,
+        final: true,
+        answer: { ...assistant.turn.answer, final: true },
+      };
+    }
+    if (assistant) markFirstToken(assistant);
+    void refreshSessions();
+  } catch (caught) {
+    const assistant = assistantMessage(assistantId);
+    if (signal.aborted) {
+      if (assistant) {
+        assistant.turn = {
+          ...assistant.turn,
+          final: true,
+          answer: { ...assistant.turn.answer, final: true },
+        };
+        markFirstToken(assistant);
+      }
+      return;
+    }
+    const key = agentStreamFailureI18n(caught);
+    toastError(t(key), t('toast.error'));
+    if (assistant) {
+      assistant.turn = {
+        ...assistant.turn,
+        final: true,
+        failed: true,
+        answer: {
+          content: assistant.turn.answer.content || t(key),
+          final: true,
+        },
+      };
+      markFirstToken(assistant);
+    }
+  } finally {
+    streaming.value = false;
+    abort = null;
+    await scrollToEnd();
+  }
+}
+
+function answerText(item: ChatMessage): string {
+  return item.turn.answer.content || item.text || '';
+}
+
+async function copyAnswer(item: ChatMessage) {
+  const text = answerText(item).trim();
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    toastSuccess(t('chat.actions.copied'));
+  } catch {
