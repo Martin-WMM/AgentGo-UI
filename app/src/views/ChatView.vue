@@ -298,3 +298,153 @@ async function copyAnswer(item: ChatMessage) {
     await navigator.clipboard.writeText(text);
     toastSuccess(t('chat.actions.copied'));
   } catch {
+    toastError(t('chat.invalid'), t('toast.error'));
+  }
+}
+
+function speakAnswer(item: ChatMessage) {
+  if (item.speaking) {
+    stopSpeech();
+    return;
+  }
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    toastError(t('chat.actions.speakUnsupported'), t('toast.error'));
+    return;
+  }
+  const text = answerText(item)
+    .replace(/\$\$[\s\S]*?\$\$/g, ' ')
+    .replace(/\$[^$]+\$/g, ' ')
+    .replace(/[`*_#>\[\]()]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!text) return;
+  stopSpeech();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.onend = () => {
+    item.speaking = false;
+    if (activeSpeech === utterance) activeSpeech = null;
+  };
+  utterance.onerror = () => {
+    item.speaking = false;
+    if (activeSpeech === utterance) activeSpeech = null;
+  };
+  activeSpeech = utterance;
+  item.speaking = true;
+  window.speechSynthesis.speak(utterance);
+}
+
+function previousUserText(assistantId: string): string {
+  const index = messages.value.findIndex((item) => item.id === assistantId);
+  if (index <= 0) return '';
+  for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+    const item = messages.value[cursor];
+    if (item?.role === 'user') return item.text;
+  }
+  return '';
+}
+
+async function regenerate(item: ChatMessage) {
+  if (streaming.value) return;
+  const prompt = previousUserText(item.id);
+  if (!prompt) return;
+  const index = messages.value.findIndex((row) => row.id === item.id);
+  if (index >= 0) {
+    messages.value.splice(index, 1);
+  }
+  await send(prompt, { skipUserBubble: true });
+}
+
+function setLiked(item: ChatMessage, value: boolean) {
+  item.liked = item.liked === value ? null : value;
+}
+
+watch(
+  () => route.params.sessionId,
+  () => {
+    void bootstrapSession();
+  },
+  { immediate: true },
+);
+
+onUnmounted(() => {
+  bootToken += 1;
+  abort?.abort();
+  stopSpeech();
+});
+</script>
+
+<template>
+  <section class="ag-page ag-page--tight flex min-h-[70vh] flex-col">
+    <div
+      v-if="loadingSession && messages.length === 0"
+      class="flex flex-1 items-center justify-center text-sm text-muted-foreground"
+    >
+      {{ t('chat.loading') }}
+    </div>
+    <div
+      v-else-if="messages.length === 0"
+      class="flex flex-1 flex-col items-center justify-center text-center"
+    >
+      <div
+        class="mb-5 flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/10"
+      >
+        <Icon icon="lucide:sparkles" width="26" height="26" aria-hidden="true" />
+      </div>
+      <h1 class="text-2xl font-semibold tracking-tight">
+        {{ session?.title || t('chat.title') }}
+      </h1>
+      <p class="mt-2 text-sm text-muted-foreground">{{ t('chat.description') }}</p>
+    </div>
+    <div
+      v-else
+      ref="transcript"
+      class="flex max-h-[70vh] flex-1 flex-col gap-5 overflow-y-auto pb-4"
+      :aria-label="t('chat.title')"
+    >
+      <article
+        v-for="item in messages"
+        :key="item.id"
+        class="flex flex-col"
+        :class="item.role === 'user' ? 'items-end' : 'items-start'"
+      >
+        <p class="mb-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Icon
+            :icon="item.role === 'user' ? 'lucide:user' : 'lucide:bot'"
+            width="14"
+            height="14"
+            aria-hidden="true"
+          />
+          {{ item.role === 'user' ? t('chat.you') : t('chat.assistant') }}
+        </p>
+        <div
+          v-if="item.role === 'user'"
+          class="max-w-[85%] rounded-2xl bg-primary px-4 py-2 text-sm whitespace-pre-wrap text-primary-foreground"
+        >
+          {{ item.text }}
+        </div>
+        <div v-else class="w-full max-w-3xl space-y-3">
+          <div
+            v-if="item.turn.planPreparing || item.turn.planSteps.length"
+            class="rounded-xl border border-input/80 bg-muted/40 px-4 py-3"
+          >
+            <p class="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <Icon icon="lucide:list-checks" width="14" height="14" aria-hidden="true" />
+              {{ t('chat.plan') }}
+            </p>
+            <p v-if="item.turn.planPreparing && !item.turn.planSteps.length" class="text-sm text-muted-foreground">
+              {{ t('chat.planPreparing') }}
+            </p>
+            <ol v-else class="space-y-2">
+              <li
+                v-for="step in item.turn.planSteps"
+                :key="step.id"
+                class="flex items-start gap-2 text-sm"
+              >
+                <Icon
+                  :icon="planStatusIcon[step.status] || 'lucide:circle'"
+                  width="16"
+                  height="16"
+                  class="mt-0.5 shrink-0"
+                  :class="{
+                    'animate-spin text-primary': step.status === 'running',
+                    'text-muted-foreground': step.status === 'ready' || step.status === 'preparing',
