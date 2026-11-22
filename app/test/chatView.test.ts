@@ -148,3 +148,81 @@ describe('ChatView agent stream', () => {
         data: {
           kind: 'agent.lifecycle',
           phase: 'COMPLETED',
+          threadId: request.threadId,
+          content: 'The answer is **2**.',
+        },
+      });
+    });
+
+    const host = await mountChat();
+    const textarea = host.querySelector<HTMLTextAreaElement>('#chat-message');
+    expect(textarea).not.toBeNull();
+    textarea!.value = '1 + 1';
+    textarea!.dispatchEvent(new Event('input', { bubbles: true }));
+    await nextTick();
+    host.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await vi.waitFor(() => {
+      expect(host.textContent).toContain('Add the numbers.');
+      expect(host.textContent).toContain('The answer is 2.');
+      expect(host.textContent).toMatch(/Tools & CLI|工具与 CLI/);
+      expect(host.textContent).toContain('bash');
+      expect(host.textContent).toContain('echo ok');
+    });
+
+    expect(streamAgent).toHaveBeenCalledTimes(1);
+    const request = streamAgent.mock.calls[0][0] as {
+      input: string;
+      threadId: string;
+      sessionId?: number;
+    };
+    expect(request.input).toBe('1 + 1');
+    expect(request.threadId).toBe('11111111-1111-1111-1111-111111111111');
+    expect(request.sessionId).toBe(7);
+    expect(host.textContent).toContain('1 + 1');
+    expect(host.textContent).not.toContain('Model · started');
+    expect(host.textContent?.match(/The answer is/g)?.length).toBe(1);
+    expect(
+      host.querySelector('[aria-label="Copy answer"], [aria-label="复制回答"]'),
+    ).not.toBeNull();
+    expect(host.textContent).toMatch(/ms|s/);
+  });
+
+  it('sends on Enter and keeps Shift+Enter as a newline', async () => {
+    streamAgent.mockResolvedValue(undefined);
+    const host = await mountChat();
+    const textarea = host.querySelector<HTMLTextAreaElement>('#chat-message')!;
+    textarea.value = '你好';
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    await nextTick();
+
+    const newline = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    textarea.dispatchEvent(newline);
+    await nextTick();
+    expect(newline.defaultPrevented).toBe(false);
+    expect(streamAgent).not.toHaveBeenCalled();
+    expect(textarea.value).toBe('你好');
+
+    const composing = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      isComposing: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    textarea.dispatchEvent(composing);
+    await nextTick();
+    expect(composing.defaultPrevented).toBe(false);
+    expect(streamAgent).not.toHaveBeenCalled();
+
+    textarea.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
+    );
+    await vi.waitFor(() => expect(streamAgent).toHaveBeenCalledTimes(1));
+    expect((streamAgent.mock.calls[0][0] as { input: string }).input).toBe('你好');
+    expect(textarea.value).toBe('');
+  });
+});
