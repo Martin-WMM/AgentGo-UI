@@ -917,7 +917,8 @@ const messages = {
     },
     cli: {
       title: 'CLI 测试',
-      description: '向 POST /api/v1/cli/executions 发送 bash 命令；自动携带当前登录用户的会话请求头。',
+      description:
+        '向 POST /api/v1/cli/executions 发送 bash 命令；自动携带当前登录用户的会话请求头。',
       command: '命令',
       commandPlaceholder: '输入命令后按回车',
       environment: '环境变量',

@@ -114,40 +114,43 @@ async function runExecution() {
       <div class="flex items-baseline gap-4 text-foreground/55 dark:text-muted-foreground">
         <span
           class="font-medium"
-          :class="
-            result.exitCode === 0
-              ? 'text-foreground'
-              : 'text-rose-700 dark:text-rose-400'
-          "
+          :class="result.exitCode === 0 ? 'text-foreground' : 'text-rose-700 dark:text-rose-400'"
         >
           {{ t('cli.exitCode', { code: result.exitCode }) }}
         </span>
-        <span v-if="result.durationMs != null">{{ t('cli.duration', { ms: result.durationMs }) }}</span>
+        <span v-if="result.durationMs != null">{{
+          t('cli.duration', { ms: result.durationMs })
+        }}</span>
       </div>
 
       <div class="space-y-2">
-        <p class="text-xs font-medium tracking-wide text-foreground/50 uppercase dark:text-muted-foreground">
+        <p
+          class="text-xs font-medium tracking-wide text-foreground/50 uppercase dark:text-muted-foreground"
+        >
           {{ t('cli.stdout') }}
         </p>
-        <pre class="overflow-x-auto whitespace-pre-wrap text-[13px] leading-relaxed text-foreground">{{
-          result.stdout || t('cli.emptyOutput')
-        }}</pre>
+        <pre
+          class="overflow-x-auto whitespace-pre-wrap text-[13px] leading-relaxed text-foreground"
+          >{{ result.stdout || t('cli.emptyOutput') }}</pre>
       </div>
 
       <div v-if="hasStderr" class="space-y-2">
-        <p class="text-xs font-medium tracking-wide text-foreground/50 uppercase dark:text-muted-foreground">
+        <p
+          class="text-xs font-medium tracking-wide text-foreground/50 uppercase dark:text-muted-foreground"
+        >
           {{ t('cli.stderr') }}
         </p>
         <pre
           class="overflow-x-auto whitespace-pre-wrap text-[13px] leading-relaxed text-rose-800 dark:text-rose-300"
-          >{{ result.stderr }}</pre
-        >
+          >{{ result.stderr }}</pre>
       </div>
     </div>
 
     <Dialog :open="envDialogOpen" @update:open="envDialogOpen = $event">
       <form @submit.prevent="saveEnvDialog">
-        <h2 class="text-lg font-semibold tracking-tight text-foreground">{{ t('cli.environment') }}</h2>
+        <h2 class="text-lg font-semibold tracking-tight text-foreground">
+          {{ t('cli.environment') }}
+        </h2>
         <p class="mt-1.5 text-sm text-foreground/60 dark:text-muted-foreground">
           {{ t('cli.environmentHint') }}
         </p>
@@ -164,7 +167,9 @@ async function runExecution() {
           <button type="button" class="ag-btn ag-btn-ghost" @click="envDialogOpen = false">
             {{ t('cli.cancel') }}
           </button>
-          <button type="submit" class="ag-btn ag-btn-primary">{{ t('cli.saveEnvironment') }}</button>
+          <button type="submit" class="ag-btn ag-btn-primary">
+            {{ t('cli.saveEnvironment') }}
+          </button>
         </div>
       </form>
     </Dialog>

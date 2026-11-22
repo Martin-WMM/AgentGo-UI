@@ -12,7 +12,9 @@ describe('cliExecutionFailureI18n', () => {
   });
 
   it('maps CLI-001 and 400 to invalid', () => {
-    expect(cliExecutionFailureI18n(new FileRequestError(400, 'bad', 'CLI-001'))).toBe('cli.invalid');
+    expect(cliExecutionFailureI18n(new FileRequestError(400, 'bad', 'CLI-001'))).toBe(
+      'cli.invalid',
+    );
   });
 });
 
