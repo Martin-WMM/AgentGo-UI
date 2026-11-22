@@ -9,7 +9,18 @@ import { i18n } from '../src/i18n';
 
 vi.mock('../src/composables/useWorkspaces', () => ({
   useWorkspaces: () => ({
-    workspaces: { value: [{ id: 'w1', groupName: 'default', name: 'Docs', description: '', color: '#fff', createdAt: '' }] },
+    workspaces: {
+      value: [
+        {
+          id: 'w1',
+          groupName: 'default',
+          name: 'Docs',
+          description: '',
+          color: '#fff',
+          createdAt: '',
+        },
+      ],
+    },
     ensureLoaded: vi.fn().mockResolvedValue(undefined),
     refreshWorkspaces: vi.fn(),
   }),

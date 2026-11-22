@@ -81,7 +81,6 @@ export function applyToolActivityEvent(
   const name = envelope.data?.toolName?.trim() || 'tool';
   const content = envelope.data?.content;
   const input = status === 'started' || status === 'running' ? content : undefined;
-  const summary =
-    status === 'succeeded' || status === 'failed' ? content : undefined;
+  const summary = status === 'succeeded' || status === 'failed' ? content : undefined;
   return upsertToolActivity(turn, kind, name, status, input, summary);
 }

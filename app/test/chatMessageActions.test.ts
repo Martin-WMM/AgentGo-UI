@@ -25,7 +25,9 @@ describe('ChatMessageActions', () => {
       speaking: false,
     });
 
-    expect(host.querySelector('[aria-label="Copy answer"], [aria-label="复制回答"]')).not.toBeNull();
+    expect(
+      host.querySelector('[aria-label="Copy answer"], [aria-label="复制回答"]'),
+    ).not.toBeNull();
     expect(host.textContent).toMatch(/842/);
     app.unmount();
   });

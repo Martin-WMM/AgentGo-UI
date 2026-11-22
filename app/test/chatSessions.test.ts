@@ -21,7 +21,9 @@ describe('chatSessions api helpers', () => {
       vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
-        json: async () => ({ data: [{ id: 1, title: 'A', threadId: 't', createdAt: '', updatedAt: '' }] }),
+        json: async () => ({
+          data: [{ id: 1, title: 'A', threadId: 't', createdAt: '', updatedAt: '' }],
+        }),
       }),
     );
     await expect(listChatSessions()).resolves.toEqual([

@@ -12,7 +12,9 @@ describe('parsePlanSteps', () => {
   });
 
   it('keeps a single paragraph as one step', () => {
-    expect(parsePlanSteps('Answer directly.').map((step) => step.text)).toEqual(['Answer directly.']);
+    expect(parsePlanSteps('Answer directly.').map((step) => step.text)).toEqual([
+      'Answer directly.',
+    ]);
   });
 
   it('reads structured plan JSON titles', () => {
@@ -23,11 +25,15 @@ describe('parsePlanSteps', () => {
         { id: 2, title: 'Write answer', instruction: 'Compose the explanation' },
       ],
     });
-    expect(parsePlanSteps(plan).map((step) => step.text)).toEqual(['Outline concepts', 'Write answer']);
+    expect(parsePlanSteps(plan).map((step) => step.text)).toEqual([
+      'Outline concepts',
+      'Write answer',
+    ]);
   });
 
   it('does not split multi-line essays into checklist rows', () => {
-    const essay = '## 8. Simple example\nMean 100, sigma 2.\n## 9. Relationship\nGaussian means normal.';
+    const essay =
+      '## 8. Simple example\nMean 100, sigma 2.\n## 9. Relationship\nGaussian means normal.';
     expect(parsePlanSteps(essay)).toHaveLength(1);
   });
 });

@@ -205,10 +205,7 @@ function isPlaceholder(blockId: string): boolean {
         >
           {{ t('composerConfig.comingSoon') }}
         </p>
-        <p
-          v-if="loadingBlock === block.id"
-          class="px-1 py-3 text-xs text-muted-foreground"
-        >
+        <p v-if="loadingBlock === block.id" class="px-1 py-3 text-xs text-muted-foreground">
           {{ t('composerConfig.loading') }}
         </p>
         <p

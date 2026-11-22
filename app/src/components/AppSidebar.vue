@@ -139,7 +139,13 @@ async function onDeleteSession(id: number, event: Event) {
         :title="collapsed ? item.title : undefined"
         @click="closeMobile"
       >
-        <Icon icon="lucide:message-square" width="18" height="18" class="shrink-0" aria-hidden="true" />
+        <Icon
+          icon="lucide:message-square"
+          width="18"
+          height="18"
+          class="shrink-0"
+          aria-hidden="true"
+        />
         <span class="ag-sidebar-label min-w-0 flex-1 truncate">{{ item.title }}</span>
         <button
           v-if="!collapsed"
@@ -153,7 +159,10 @@ async function onDeleteSession(id: number, event: Event) {
         </button>
       </RouterLink>
     </div>
-    <nav class="flex min-h-0 shrink-0 flex-col overflow-hidden p-2" :aria-label="t('console.label')">
+    <nav
+      class="flex min-h-0 shrink-0 flex-col overflow-hidden p-2"
+      :aria-label="t('console.label')"
+    >
       <div v-for="section in navSections" :key="section.key" :class="section.className">
         <RouterLink
           v-for="item in section.items"

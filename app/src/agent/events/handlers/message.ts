@@ -1,9 +1,4 @@
-import {
-  AGENT_EVENT,
-  type AgentEventHandler,
-  type AgentTurnVo,
-  type PlanStepVo,
-} from '../types';
+import { AGENT_EVENT, type AgentEventHandler, type AgentTurnVo, type PlanStepVo } from '../types';
 
 /**
  * Parses plan text into ordered steps.
@@ -29,10 +24,7 @@ export function parsePlanSteps(planText: string): PlanStepVo[] {
 
   // Only promote list syntax when every non-empty line is a list item.
   // Multi-line essays must not become dozens of checklist rows.
-  const texts =
-    listItems.length >= 1 && listItems.length === lines.length
-      ? listItems
-      : [trimmed];
+  const texts = listItems.length >= 1 && listItems.length === lines.length ? listItems : [trimmed];
 
   return texts.map((text, index) => toStep(index + 1, text));
 }

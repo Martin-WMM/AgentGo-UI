@@ -26,13 +26,7 @@ export interface AgentStreamEnvelope {
 }
 
 /** User-facing plan step status shown in the chat UI. */
-export type PlanStepStatus =
-  | 'preparing'
-  | 'ready'
-  | 'running'
-  | 'succeeded'
-  | 'skipped'
-  | 'failed';
+export type PlanStepStatus = 'preparing' | 'ready' | 'running' | 'succeeded' | 'skipped' | 'failed';
 
 export interface PlanStepVo {
   id: string;

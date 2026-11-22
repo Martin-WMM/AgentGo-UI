@@ -10,7 +10,10 @@ function markSteps(turn: AgentTurnVo, status: PlanStepStatus, onlyRunning = fals
     ...turn,
     planSteps: turn.planSteps.map((step) => {
       if (onlyRunning && step.status !== 'running' && step.status !== 'ready') return step;
-      if (!onlyRunning && (step.status === 'succeeded' || step.status === 'skipped' || step.status === 'failed')) {
+      if (
+        !onlyRunning &&
+        (step.status === 'succeeded' || step.status === 'skipped' || step.status === 'failed')
+      ) {
         return step;
       }
       return { ...step, status };
@@ -38,7 +41,10 @@ export const nodeLifecycleHandler: AgentEventHandler = {
     if (nodeId === 'llm' || nodeId === 'execution') {
       if (phase === 'STARTED' || phase === 'RUNNING') {
         const next = markSteps(turn, 'running', true);
-        if (next.planSteps.every((step) => step.status !== 'running') && next.planSteps.length > 0) {
+        if (
+          next.planSteps.every((step) => step.status !== 'running') &&
+          next.planSteps.length > 0
+        ) {
           const firstReady = next.planSteps.findIndex((step) => step.status === 'ready');
           if (firstReady >= 0) {
             return {

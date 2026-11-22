@@ -19,10 +19,7 @@ const starting = ref(false);
 const suggestions = computed(() => tm('home.suggestions') as string[]);
 const selectedWorkspaceId = computed(() => {
   const exposed = composerConfig.value?.workspaceId as
-    | string
-    | null
-    | { value?: string | null }
-    | undefined;
+    string | null | { value?: string | null } | undefined;
   if (exposed == null) return null;
   if (typeof exposed === 'string') return exposed;
   return exposed.value ?? null;

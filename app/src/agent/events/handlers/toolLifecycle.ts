@@ -22,9 +22,7 @@ export function advancePlanStepFromPhase(turn: AgentTurnVo, phase: string): Agen
 
   const runningIndex = turn.planSteps.findIndex((step) => step.status === 'running');
   const targetIndex =
-    runningIndex >= 0
-      ? runningIndex
-      : turn.planSteps.findIndex((step) => step.status === 'ready');
+    runningIndex >= 0 ? runningIndex : turn.planSteps.findIndex((step) => step.status === 'ready');
   if (targetIndex < 0) return turn;
 
   let status = turn.planSteps[targetIndex]!.status;
