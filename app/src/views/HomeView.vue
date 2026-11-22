@@ -1,59 +1,53 @@
 <script setup lang="ts">
-import { toastError, toastSuccess } from '@agentgo/ui';
+import { toastError } from '@agentgo/ui';
 import { Icon } from '@iconify/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
-import { useWorkspaces } from '../composables/useWorkspaces';
-import { DEFAULT_WORKSPACE_COLOR } from '../lib/workspaceColors';
+import ComposerConfigBlocks from '../components/ComposerConfigBlocks.vue';
+import ComposerTrailingActions from '../components/ComposerTrailingActions.vue';
+import { onComposerEnterSubmit } from '../composables/useComposerEnterSubmit';
+import { useChatSessions } from '../composables/useChatSessions';
 
 const { t, tm } = useI18n();
 const router = useRouter();
-const { workspaces, createWorkspace, uploadFile } = useWorkspaces();
+const { create: createSession } = useChatSessions();
 const message = ref('');
-const attachInput = ref<HTMLInputElement | null>(null);
-const attaching = ref(false);
+const composerConfig = ref<InstanceType<typeof ComposerConfigBlocks> | null>(null);
+const starting = ref(false);
 const suggestions = computed(() => tm('home.suggestions') as string[]);
+const selectedWorkspaceId = computed(() => {
+  const exposed = composerConfig.value?.workspaceId as
+    | string
+    | null
+    | { value?: string | null }
+    | undefined;
+  if (exposed == null) return null;
+  if (typeof exposed === 'string') return exposed;
+  return exposed.value ?? null;
+});
 
-function startConversation(prompt = message.value) {
-  if (!prompt.trim()) return;
-  router.push({ name: 'chat', query: { prompt: prompt.trim() } });
-}
-
-function openAttachPicker() {
-  if (attaching.value) return;
-  attachInput.value?.click();
-}
-
-async function ensureUploadsWorkspace() {
-  const existing = workspaces.value.find(
-    (workspace) => workspace.name === t('home.uploadsWorkspace'),
-  );
-  if (existing) return existing;
-  return createWorkspace(
-    t('home.uploadsWorkspace'),
-    t('home.uploadsWorkspaceDescription'),
-    DEFAULT_WORKSPACE_COLOR,
-  );
-}
-
-async function onAttachChange(event: Event) {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  input.value = '';
-  if (!file) return;
-
-  attaching.value = true;
+async function startConversation(prompt = message.value) {
+  const text = prompt.trim();
+  if (!text || starting.value) return;
+  starting.value = true;
   try {
-    const workspace = await ensureUploadsWorkspace();
-    await uploadFile(workspace.id, file);
-    toastSuccess(t('home.attachSuccess', { name: file.name }), t('toast.success'));
+    const session = await createSession();
+    await router.push({
+      name: 'chat-session',
+      params: { sessionId: String(session.id) },
+      query: { prompt: text },
+    });
   } catch {
-    toastError(t('home.attachError'), t('toast.error'));
+    toastError(t('chat.sessionCreateError'), t('toast.error'));
   } finally {
-    attaching.value = false;
+    starting.value = false;
   }
+}
+
+function onComposerKeydown(event: KeyboardEvent) {
+  onComposerEnterSubmit(event, () => startConversation());
 }
 </script>
 
@@ -100,41 +94,27 @@ async function onAttachChange(event: Event) {
           rows="3"
           :placeholder="t('home.placeholder')"
           class="block w-full resize-none border-0 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus:ring-0"
+          @keydown="onComposerKeydown"
         />
-        <div class="flex items-center justify-between gap-2 border-t border-input/70 px-1 pt-2">
-          <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1.5 border-t border-input/70 px-1 pt-2">
+          <div class="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+            <ComposerConfigBlocks ref="composerConfig" :disabled="starting" />
+          </div>
+          <div class="flex shrink-0 items-center gap-0.5">
+            <ComposerTrailingActions
+              v-model="message"
+              :workspace-id="selectedWorkspaceId"
+              :disabled="starting"
+            />
             <button
-              type="button"
-              class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
-              :aria-label="attaching ? t('home.attaching') : t('home.attach')"
-              :disabled="attaching"
-              @click="openAttachPicker"
+              type="submit"
+              class="ag-btn ag-btn-primary ag-btn-icon shrink-0"
+              :aria-label="t('home.send')"
+              :disabled="!message.trim()"
             >
-              <Icon
-                :icon="attaching ? 'lucide:loader-circle' : 'lucide:paperclip'"
-                width="18"
-                height="18"
-                aria-hidden="true"
-                :class="attaching ? 'animate-spin' : undefined"
-              />
-            </button>
-            <input ref="attachInput" type="file" class="sr-only" @change="onAttachChange" />
-            <button
-              type="button"
-              class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              :aria-label="t('home.voice')"
-            >
-              <Icon icon="lucide:mic" width="18" height="18" aria-hidden="true" />
+              <Icon icon="lucide:arrow-up" width="18" height="18" aria-hidden="true" />
             </button>
           </div>
-          <button
-            type="submit"
-            class="ag-btn ag-btn-primary ag-btn-icon"
-            :aria-label="t('home.send')"
-            :disabled="!message.trim()"
-          >
-            <Icon icon="lucide:arrow-up" width="18" height="18" aria-hidden="true" />
-          </button>
         </div>
       </form>
 
