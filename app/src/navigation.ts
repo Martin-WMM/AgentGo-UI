@@ -2,7 +2,7 @@ export type ResourceKey =
   'files' | 'models' | 'connections' | 'mcp' | 'skills' | 'a2a' | 'prompts' | 'apis';
 
 export interface ConsoleNavItem {
-  key: 'settings' | 'resources' | 'eventLogs';
+  key: 'settings' | 'resources' | 'eventLogs' | 'cli';
   to: string;
   icon: string;
 }
@@ -21,6 +21,7 @@ export const consoleNavItems: ConsoleNavItem[] = [
 
 /** Pinned to the bottom of the control-panel sidebar. */
 export const consoleFooterNavItems: ConsoleNavItem[] = [
+  { key: 'cli', to: '/console/cli', icon: 'lucide:terminal' },
   { key: 'eventLogs', to: '/console/events', icon: 'lucide:scroll-text' },
 ];
 
