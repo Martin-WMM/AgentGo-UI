@@ -21,6 +21,7 @@ import SettingsView from './views/SettingsView.vue';
 import WorkspaceEditorView from './views/WorkspaceEditorView.vue';
 import WorkspaceFilesView from './views/WorkspaceFilesView.vue';
 import ChartsTestView from './views/ChartsTestView.vue';
+import CliExecutionView from './views/CliExecutionView.vue';
 import { useAuthStore } from './stores/auth';
 import { useSettingsStore } from './stores/settings';
 
@@ -45,6 +46,7 @@ export const router = createRouter({
     { path: '/auth-error', name: 'auth-error', component: AuthGateView },
     { path: '/settings', redirect: '/console/settings' },
     { path: '/console/settings', name: 'console-settings', component: SettingsView },
+    { path: '/console/cli', name: 'console-cli', component: CliExecutionView },
     { path: '/console/events', name: 'console-events', component: EventLogsView },
     { path: '/console/resources', name: 'console-resources', component: ResourcesView },
     { path: '/console/files', name: 'console-files', component: FilesView },
