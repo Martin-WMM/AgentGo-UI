@@ -42,6 +42,7 @@ export const router = createRouter({
       meta: { public: true },
     },
     { path: '/chat', name: 'chat', component: ChatView },
+    { path: '/chat/:sessionId', name: 'chat-session', component: ChatView },
     { path: '/signed-out', name: 'signed-out', component: AuthGateView },
     { path: '/auth-error', name: 'auth-error', component: AuthGateView },
     { path: '/settings', redirect: '/console/settings' },

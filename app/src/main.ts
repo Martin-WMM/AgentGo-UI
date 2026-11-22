@@ -3,10 +3,13 @@ import { createApp } from 'vue';
 import '@agentgo/ui/styles.css';
 import App from './App.vue';
 import { i18n } from './i18n';
+import { setupMarkstreamMath } from './lib/setupMarkstreamMath';
 import { router } from './router';
 import { createPinia } from 'pinia';
 
 import { useSettingsStore } from './stores/settings';
+
+setupMarkstreamMath();
 
 // Mount immediately so a slow/unavailable auth service cannot leave the browser
 // showing a completely blank document. Authentication is handled by the router

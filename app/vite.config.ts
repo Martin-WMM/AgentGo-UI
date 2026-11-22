@@ -6,4 +6,7 @@ export default defineConfig({
   // Local/dev defaults to '/'; TEST gateway serves the UI under /ui/.
   base: process.env.VITE_BASE || '/',
   plugins: [vue(), tailwindcss()],
+  optimizeDeps: {
+    include: ['katex', 'markstream-vue'],
+  },
 });
