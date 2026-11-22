@@ -448,3 +448,101 @@ onUnmounted(() => {
                   :class="{
                     'animate-spin text-primary': step.status === 'running',
                     'text-muted-foreground': step.status === 'ready' || step.status === 'preparing',
+                    'text-emerald-600 dark:text-emerald-400': step.status === 'succeeded',
+                    'text-destructive': step.status === 'failed',
+                  }"
+                  aria-hidden="true"
+                />
+                <span class="min-w-0 flex-1">
+                  <span class="sr-only">{{ t(`chat.planStatus.${step.status}`) }}</span>
+                  {{ step.text }}
+                </span>
+              </li>
+            </ol>
+          </div>
+          <ChatToolActivity :activities="item.turn.toolActivities" />
+          <div v-if="item.turn.answer.content" class="rounded-2xl border border-input bg-card px-4 py-3">
+            <MarkdownRender
+              mode="chat"
+              :content="item.turn.answer.content"
+              :final="item.turn.answer.final || item.turn.final"
+              :is-dark="isDark"
+              smooth-streaming
+            />
+          </div>
+          <p
+            v-else-if="!item.turn.final && !item.turn.toolActivities.length"
+            class="text-sm text-muted-foreground"
+          >
+            {{ t('chat.streaming') }}
+          </p>
+          <p
+            v-else-if="!item.turn.final && item.turn.toolActivities.some((activity) => activity.status === 'running' || activity.status === 'started')"
+            class="text-sm text-muted-foreground"
+          >
+            {{ t('chat.toolActivity.working') }}
+          </p>
+          <ChatMessageActions
+            v-if="item.turn.final || item.turn.answer.content"
+            :ttft-ms="item.ttftMs"
+            :liked="item.liked"
+            :speaking="item.speaking"
+            :disabled="streaming && !item.turn.final"
+            @copy="copyAnswer(item)"
+            @speak="speakAnswer(item)"
+            @refresh="regenerate(item)"
+            @like="setLiked(item, true)"
+            @dislike="setLiked(item, false)"
+          />
+        </div>
+      </article>
+    </div>
+    <form
+      class="sticky bottom-0 rounded-2xl border border-input bg-card/95 p-2 shadow-lg shadow-foreground/10 backdrop-blur"
+      @submit.prevent="send()"
+    >
+      <label for="chat-message" class="sr-only">{{ t('home.placeholder') }}</label>
+      <textarea
+        id="chat-message"
+        v-model="draft"
+        rows="3"
+        :placeholder="t('home.placeholder')"
+        class="block w-full resize-none bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
+        @keydown="onComposerKeydown"
+      />
+      <div class="flex items-center gap-1.5 border-t border-input/70 pt-2">
+        <div class="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+          <ComposerConfigBlocks ref="composerConfig" :disabled="streaming" />
+        </div>
+        <span v-if="streaming" class="shrink-0 px-2 text-xs text-muted-foreground">{{
+          t('chat.streaming')
+        }}</span>
+        <div class="flex shrink-0 items-center gap-0.5">
+          <ComposerTrailingActions
+            v-model="draft"
+            :workspace-id="selectedWorkspaceId"
+            :disabled="streaming || loadingSession"
+          />
+          <button
+            v-if="streaming"
+            type="button"
+            class="ag-btn ag-btn-primary ag-btn-icon shrink-0"
+            :aria-label="t('chat.stop')"
+            @click="stop"
+          >
+            <Icon icon="lucide:square" width="16" height="16" aria-hidden="true" />
+          </button>
+          <button
+            v-else
+            type="submit"
+            class="ag-btn ag-btn-primary ag-btn-icon shrink-0"
+            :aria-label="t('home.send')"
+            :disabled="!draft.trim() || !session || loadingSession"
+          >
+            <Icon icon="lucide:arrow-up" width="18" height="18" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+</template>
