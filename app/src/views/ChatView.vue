@@ -57,10 +57,7 @@ const transcript = ref<HTMLElement | null>(null);
 const composerConfig = ref<InstanceType<typeof ComposerConfigBlocks> | null>(null);
 const selectedWorkspaceId = computed(() => {
   const exposed = composerConfig.value?.workspaceId as
-    | string
-    | null
-    | { value?: string | null }
-    | undefined;
+    string | null | { value?: string | null } | undefined;
   if (exposed == null) return null;
   if (typeof exposed === 'string') return exposed;
   return exposed.value ?? null;
@@ -111,15 +108,15 @@ function onComposerKeydown(event: KeyboardEvent) {
   });
 }
 
-function historyToMessages(
-  rows: Awaited<ReturnType<typeof listChatMessages>>,
-): ChatMessage[] {
+function historyToMessages(rows: Awaited<ReturnType<typeof listChatMessages>>): ChatMessage[] {
   return rows.map((row) => {
     if (row.role === 'assistant') {
-      const planSteps = row.plan ? parsePlanSteps(row.plan).map((step) => ({
-        ...step,
-        status: 'succeeded' as const,
-      })) : [];
+      const planSteps = row.plan
+        ? parsePlanSteps(row.plan).map((step) => ({
+            ...step,
+            status: 'succeeded' as const,
+          }))
+        : [];
       return {
         id: `history-${row.id}`,
         role: 'assistant',
@@ -431,7 +428,10 @@ onUnmounted(() => {
               <Icon icon="lucide:list-checks" width="14" height="14" aria-hidden="true" />
               {{ t('chat.plan') }}
             </p>
-            <p v-if="item.turn.planPreparing && !item.turn.planSteps.length" class="text-sm text-muted-foreground">
+            <p
+              v-if="item.turn.planPreparing && !item.turn.planSteps.length"
+              class="text-sm text-muted-foreground"
+            >
               {{ t('chat.planPreparing') }}
             </p>
             <ol v-else class="space-y-2">
@@ -461,7 +461,10 @@ onUnmounted(() => {
             </ol>
           </div>
           <ChatToolActivity :activities="item.turn.toolActivities" />
-          <div v-if="item.turn.answer.content" class="rounded-2xl border border-input bg-card px-4 py-3">
+          <div
+            v-if="item.turn.answer.content"
+            class="rounded-2xl border border-input bg-card px-4 py-3"
+          >
             <MarkdownRender
               mode="chat"
               :content="item.turn.answer.content"
@@ -477,7 +480,12 @@ onUnmounted(() => {
             {{ t('chat.streaming') }}
           </p>
           <p
-            v-else-if="!item.turn.final && item.turn.toolActivities.some((activity) => activity.status === 'running' || activity.status === 'started')"
+            v-else-if="
+              !item.turn.final &&
+              item.turn.toolActivities.some(
+                (activity) => activity.status === 'running' || activity.status === 'started',
+              )
+            "
             class="text-sm text-muted-foreground"
           >
             {{ t('chat.toolActivity.working') }}

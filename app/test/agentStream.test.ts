@@ -11,7 +11,9 @@ import {
 
 describe('consumeSseBlocks', () => {
   it('keeps an incomplete frame in the remainder', () => {
-    const consumed = consumeSseBlocks('event: message\ndata: {"a":1}\n\nevent: message\ndata: {"a":');
+    const consumed = consumeSseBlocks(
+      'event: message\ndata: {"a":1}\n\nevent: message\ndata: {"a":',
+    );
     expect(consumed.blocks).toEqual(['event: message\ndata: {"a":1}']);
     expect(consumed.rest).toBe('event: message\ndata: {"a":');
   });
@@ -58,7 +60,13 @@ describe('applyAgentStreamEvent', () => {
     });
     turn = applyAgentStreamEvent(turn, {
       eventId: '3',
-      data: { kind: 'node.lifecycle', phase: 'COMPLETED', threadId: 't', nodeId: 'output', content: '**2**' },
+      data: {
+        kind: 'node.lifecycle',
+        phase: 'COMPLETED',
+        threadId: 't',
+        nodeId: 'output',
+        content: '**2**',
+      },
     });
     turn = applyAgentStreamEvent(turn, {
       eventId: '4',
@@ -100,7 +108,12 @@ describe('applyAgentStreamEvent', () => {
   it('marks a failed run and uses the failure text when no answer arrived', () => {
     const turn = applyAgentStreamEvent(emptyAgentTurnVo(), {
       eventId: '9',
-      data: { kind: 'agent.lifecycle', phase: 'FAILED', threadId: 't', content: 'Qwen request failed.' },
+      data: {
+        kind: 'agent.lifecycle',
+        phase: 'FAILED',
+        threadId: 't',
+        content: 'Qwen request failed.',
+      },
     });
     expect(turn.final).toBe(true);
     expect(turn.failed).toBe(true);
@@ -110,7 +123,11 @@ describe('applyAgentStreamEvent', () => {
 
 describe('agentStreamFailureI18n', () => {
   it('maps busy and invalid agent responses', () => {
-    expect(agentStreamFailureI18n(new FileRequestError(503, 'busy', 'AGENT-002'))).toBe('chat.busy');
-    expect(agentStreamFailureI18n(new FileRequestError(400, 'bad', 'AGENT-001'))).toBe('chat.invalid');
+    expect(agentStreamFailureI18n(new FileRequestError(503, 'busy', 'AGENT-002'))).toBe(
+      'chat.busy',
+    );
+    expect(agentStreamFailureI18n(new FileRequestError(400, 'bad', 'AGENT-001'))).toBe(
+      'chat.invalid',
+    );
   });
 });

@@ -14,9 +14,8 @@ const createChatSession = vi.fn();
 const refreshSessions = vi.fn();
 
 vi.mock('../src/api/agentStream', async () => {
-  const actual = await vi.importActual<typeof import('../src/api/agentStream')>(
-    '../src/api/agentStream',
-  );
+  const actual =
+    await vi.importActual<typeof import('../src/api/agentStream')>('../src/api/agentStream');
   return {
     ...actual,
     streamAgent: (...args: unknown[]) => streamAgent(...args),
@@ -96,63 +95,65 @@ describe('ChatView agent stream', () => {
   });
 
   it('sends the composer text and renders the plan and answer through the stream', async () => {
-    streamAgent.mockImplementation(async (request: {
-      input: string;
-      threadId: string;
-      sessionId?: number;
-      onEvent: (envelope: unknown) => void;
-    }) => {
-      request.onEvent({
-        eventId: '1',
-        data: {
-          kind: 'message',
-          phase: 'ASSISTANT',
-          threadId: request.threadId,
-          nodeId: 'plan',
-          content: '1. Add the numbers.',
-        },
-      });
-      request.onEvent({
-        eventId: '1a',
-        data: {
-          kind: 'cli.lifecycle',
-          phase: 'STARTED',
-          threadId: request.threadId,
-          toolName: 'bash',
-          content: 'echo ok',
-        },
-      });
-      request.onEvent({
-        eventId: '1b',
-        data: {
-          kind: 'cli.lifecycle',
-          phase: 'SUCCEEDED',
-          threadId: request.threadId,
-          toolName: 'bash',
-          content: 'status=COMPLETED exitCode=0\nstdout:\nok',
-        },
-      });
-      request.onEvent({
-        eventId: '2',
-        data: {
-          kind: 'node.lifecycle',
-          phase: 'COMPLETED',
-          threadId: request.threadId,
-          nodeId: 'output',
-          content: 'The answer is **2**.',
-        },
-      });
-      request.onEvent({
-        eventId: '3',
-        finished: true,
-        data: {
-          kind: 'agent.lifecycle',
-          phase: 'COMPLETED',
-          threadId: request.threadId,
-          content: 'The answer is **2**.',
-        },
-      });
-    });
+    streamAgent.mockImplementation(
+      async (request: {
+        input: string;
+        threadId: string;
+        sessionId?: number;
+        onEvent: (envelope: unknown) => void;
+      }) => {
+        request.onEvent({
+          eventId: '1',
+          data: {
+            kind: 'message',
+            phase: 'ASSISTANT',
+            threadId: request.threadId,
+            nodeId: 'plan',
+            content: '1. Add the numbers.',
+          },
+        });
+        request.onEvent({
+          eventId: '1a',
+          data: {
+            kind: 'cli.lifecycle',
+            phase: 'STARTED',
+            threadId: request.threadId,
+            toolName: 'bash',
+            content: 'echo ok',
+          },
+        });
+        request.onEvent({
+          eventId: '1b',
+          data: {
+            kind: 'cli.lifecycle',
+            phase: 'SUCCEEDED',
+            threadId: request.threadId,
+            toolName: 'bash',
+            content: 'status=COMPLETED exitCode=0\nstdout:\nok',
+          },
+        });
+        request.onEvent({
+          eventId: '2',
+          data: {
+            kind: 'node.lifecycle',
+            phase: 'COMPLETED',
+            threadId: request.threadId,
+            nodeId: 'output',
+            content: 'The answer is **2**.',
+          },
+        });
+        request.onEvent({
+          eventId: '3',
+          finished: true,
+          data: {
+            kind: 'agent.lifecycle',
+            phase: 'COMPLETED',
+            threadId: request.threadId,
+            content: 'The answer is **2**.',
+          },
+        });
+      },
+    );
 
     const host = await mountChat();
     const textarea = host.querySelector<HTMLTextAreaElement>('#chat-message');
@@ -160,7 +161,9 @@ describe('ChatView agent stream', () => {
     textarea!.value = '1 + 1';
     textarea!.dispatchEvent(new Event('input', { bubbles: true }));
     await nextTick();
-    host.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    host
+      .querySelector('form')!
+      .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     await vi.waitFor(() => {
       expect(host.textContent).toContain('Add the numbers.');
       expect(host.textContent).toContain('The answer is 2.');
